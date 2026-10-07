@@ -3,7 +3,6 @@ const session = require("express-session");
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
-const crypto = require("crypto");
 
 const app = express();
 
@@ -12,912 +11,1040 @@ const PORT = process.env.PORT || 10000;
 const DATA_DIR = path.join(__dirname, "data");
 const MANUALS_DIR = path.join(DATA_DIR, "manuals");
 const LIBRARY_FILE = path.join(DATA_DIR, "library.json");
-const PUBLIC_DIR = path.join(__dirname, "public");
 
-// Maak mappen automatisch aan
+
+// --------------------------------------------------
+// MAPPEN AANMAKEN
+// --------------------------------------------------
+
+fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(MANUALS_DIR, { recursive: true });
 
-// Maak library.json aan als die nog niet bestaat
-if (!fs.existsSync(LIBRARY_FILE)) {
-    fs.writeFileSync(
-        LIBRARY_FILE,
-        JSON.stringify(
-            {
-                aircraft: []
-            },
-            null,
-            2
-        )
-    );
-}
 
-
-// ============================================================
-// LIBRARY
-// ============================================================
+// --------------------------------------------------
+// LIBRARY LADEN
+// --------------------------------------------------
 
 function loadLibrary() {
-    try {
-        return JSON.parse(
-            fs.readFileSync(
-                LIBRARY_FILE,
-                "utf8"
-            )
-        );
-    } catch (error) {
 
-        console.error(
-            "Library kon niet worden gelezen:",
-            error
-        );
+  if (!fs.existsSync(LIBRARY_FILE)) {
 
-        return {
-            aircraft: []
-        };
+    const emptyLibrary = {
+      aircraft: []
+    };
+
+    fs.writeFileSync(
+      LIBRARY_FILE,
+      JSON.stringify(emptyLibrary, null, 2)
+    );
+
+    return emptyLibrary;
+  }
+
+
+  try {
+
+    const data =
+      JSON.parse(
+        fs.readFileSync(
+          LIBRARY_FILE,
+          "utf8"
+        )
+      );
+
+
+    if (!data.aircraft) {
+      data.aircraft = [];
     }
+
+
+    return data;
+
+  } catch (error) {
+
+    console.error(
+      "Library kon niet worden gelezen:",
+      error
+    );
+
+    return {
+      aircraft: []
+    };
+
+  }
+
 }
 
+
+// --------------------------------------------------
+// LIBRARY OPSLAAN
+// --------------------------------------------------
 
 function saveLibrary(library) {
 
-    fs.writeFileSync(
-        LIBRARY_FILE,
-        JSON.stringify(
-            library,
-            null,
-            2
-        )
-    );
+  fs.writeFileSync(
+    LIBRARY_FILE,
+    JSON.stringify(
+      library,
+      null,
+      2
+    )
+  );
 
 }
 
 
-// ============================================================
-// EXPRESS
-// ============================================================
+// --------------------------------------------------
+// MIDDLEWARE
+// --------------------------------------------------
 
 app.use(express.json());
 
 app.use(
-    express.urlencoded({
-        extended: true
-    })
+  express.urlencoded({
+    extended: true
+  })
 );
 
-
-// ============================================================
-// SESSIONS
-// ============================================================
 
 app.use(
-    session({
+  session({
 
-        secret:
-            process.env.SESSION_SECRET ||
-            "VLOCX_CHANGE_THIS_SECRET",
+    secret:
+      process.env.SESSION_SECRET ||
+      "CHANGE-THIS-SECRET",
 
-        resave: false,
+    resave: false,
 
-        saveUninitialized: false,
+    saveUninitialized: false,
 
-        cookie: {
-            httpOnly: true,
+    cookie: {
 
-            secure:
-                process.env.NODE_ENV === "production",
+      secure:
+        process.env.NODE_ENV === "production",
 
-            maxAge:
-                1000 * 60 * 60 * 8
-        }
+      httpOnly: true,
 
-    })
-);
-
-
-// ============================================================
-// ADMIN LOGIN
-// ============================================================
-
-function requireAdmin(req, res, next) {
-
-    if (!req.session.admin) {
-
-        return res.status(401).json({
-            error: "Niet ingelogd."
-        });
+      sameSite: "lax"
 
     }
 
-    next();
+  })
+);
+
+
+// --------------------------------------------------
+// PDF UPLOAD
+// --------------------------------------------------
+
+const storage =
+  multer.diskStorage({
+
+    destination:
+      function (
+        req,
+        file,
+        cb
+      ) {
+
+        cb(
+          null,
+          MANUALS_DIR
+        );
+
+      },
+
+
+    filename:
+      function (
+        req,
+        file,
+        cb
+      ) {
+
+        const safeName =
+          path.basename(
+            file.originalname
+          )
+          .replace(
+            /[^a-zA-Z0-9._-]/g,
+            "_"
+          );
+
+
+        const uniqueName =
+          Date.now() +
+          "_" +
+          safeName;
+
+
+        cb(
+          null,
+          uniqueName
+        );
+
+      }
+
+  });
+
+
+const upload =
+  multer({
+
+    storage,
+
+    limits: {
+
+      fileSize:
+        5 * 1024 * 1024 * 1024
+
+    },
+
+
+    fileFilter:
+      function (
+        req,
+        file,
+        cb
+      ) {
+
+        const isPdf =
+          file.mimetype ===
+          "application/pdf"
+          ||
+          path
+            .extname(
+              file.originalname
+            )
+            .toLowerCase() ===
+          ".pdf";
+
+
+        if (!isPdf) {
+
+          return cb(
+            new Error(
+              "Alleen PDF-bestanden zijn toegestaan."
+            )
+          );
+
+        }
+
+
+        cb(
+          null,
+          true
+        );
+
+      }
+
+  });
+
+
+// --------------------------------------------------
+// ADMIN AUTH
+// --------------------------------------------------
+
+function requireAdmin(
+  req,
+  res,
+  next
+) {
+
+  if (
+    req.session &&
+    req.session.isAdmin
+  ) {
+
+    return next();
+
+  }
+
+
+  res
+    .status(401)
+    .json({
+      error:
+        "Niet ingelogd als admin."
+    });
 
 }
 
 
-// ============================================================
-// FILE UPLOAD
-// ============================================================
-
-const storage =
-    multer.diskStorage({
-
-        destination:
-            function(req, file, cb) {
-
-                cb(
-                    null,
-                    MANUALS_DIR
-                );
-
-            },
-
-        filename:
-            function(req, file, cb) {
-
-                const extension =
-                    path.extname(
-                        file.originalname
-                    ).toLowerCase();
-
-                const randomName =
-                    crypto
-                        .randomBytes(16)
-                        .toString("hex");
-
-                cb(
-                    null,
-                    randomName + extension
-                );
-
-            }
-
-    });
-
-
-const upload =
-    multer({
-
-        storage,
-
-        limits: {
-
-            fileSize:
-                300 * 1024 * 1024
-
-        },
-
-        fileFilter:
-            function(req, file, cb) {
-
-                const extension =
-                    path.extname(
-                        file.originalname
-                    ).toLowerCase();
-
-                if (extension !== ".pdf") {
-
-                    return cb(
-                        new Error(
-                            "Alleen PDF-bestanden zijn toegestaan."
-                        )
-                    );
-
-                }
-
-                cb(null, true);
-
-            }
-
-    });
-
-
-// ============================================================
-// PUBLIC API
-// ============================================================
-
-app.get(
-    "/api/library",
-    function(req, res) {
-
-        const library =
-            loadLibrary();
-
-        const publicLibrary = {
-
-            aircraft:
-                library.aircraft.map(
-                    aircraft => ({
-
-                        id: aircraft.id,
-
-                        name: aircraft.name,
-
-                        manuals:
-                            aircraft.manuals.map(
-                                manual => ({
-
-                                    id: manual.id,
-
-                                    name: manual.name,
-
-                                    url:
-                                        "/manuals/" +
-                                        encodeURIComponent(
-                                            manual.filename
-                                        )
-
-                                })
-                            )
-
-                    })
-                )
-
-        };
-
-        res.json(
-            publicLibrary
-        );
-
-    }
-);
-
-
-// ============================================================
-// PDF BESTANDEN BESCHIKBAAR MAKEN
-// ============================================================
-
-app.get(
-    "/manuals/:filename",
-    function(req, res) {
-
-        const filename =
-            path.basename(
-                req.params.filename
-            );
-
-        const filePath =
-            path.join(
-                MANUALS_DIR,
-                filename
-            );
-
-        if (!fs.existsSync(filePath)) {
-
-            return res.status(404).send(
-                "Manual niet gevonden."
-            );
-
-        }
-
-        res.sendFile(
-            filePath
-        );
-
-    }
-);
-
-
-// ============================================================
+// --------------------------------------------------
 // LOGIN
-// ============================================================
+// --------------------------------------------------
 
 app.post(
-    "/api/login",
-    function(req, res) {
+  "/api/login",
+  (req, res) => {
 
-        const username =
-            process.env.ADMIN_USERNAME;
+    const {
+      username,
+      password
+    } = req.body;
 
-        const password =
-            process.env.ADMIN_PASSWORD;
 
-        if (!username || !password) {
+    const adminUsername =
+      process.env.ADMIN_USERNAME;
 
-            return res.status(500).json({
+    const adminPassword =
+      process.env.ADMIN_PASSWORD;
 
-                error:
-                    "ADMIN_USERNAME en ADMIN_PASSWORD zijn nog niet ingesteld in Render."
 
-            });
+    if (
+      username ===
+        adminUsername
+      &&
+      password ===
+        adminPassword
+    ) {
 
-        }
+      req.session.isAdmin =
+        true;
 
-        if (
-            req.body.username !== username ||
-            req.body.password !== password
-        ) {
 
-            return res.status(401).json({
+      return res.json({
+        success: true
+      });
 
-                error:
-                    "Gebruikersnaam of wachtwoord is fout."
+    }
 
-            });
 
-        }
+    res
+      .status(401)
+      .json({
+        error:
+          "Verkeerde gebruikersnaam of wachtwoord."
+      });
 
-        req.session.admin = true;
+  }
+);
+
+
+// --------------------------------------------------
+// LOGOUT
+// --------------------------------------------------
+
+app.post(
+  "/api/logout",
+  (req, res) => {
+
+    req.session.destroy(
+      () => {
 
         res.json({
-            success: true
+          success: true
         });
 
-    }
+      }
+    );
+
+  }
 );
 
 
-// ============================================================
-// LOGOUT
-// ============================================================
-
-app.post(
-    "/api/logout",
-    function(req, res) {
-
-        req.session.destroy(
-            function() {
-
-                res.json({
-                    success: true
-                });
-
-            }
-        );
-
-    }
-);
-
-
-// ============================================================
+// --------------------------------------------------
 // CHECK LOGIN
-// ============================================================
+// --------------------------------------------------
 
 app.get(
-    "/api/me",
-    function(req, res) {
+  "/api/me",
+  (req, res) => {
 
-        res.json({
+    res.json({
 
-            loggedIn:
-                !!req.session.admin
+      loggedIn:
+        !!(
+          req.session &&
+          req.session.isAdmin
+        )
 
-        });
+    });
 
-    }
+  }
 );
 
 
-// ============================================================
+// --------------------------------------------------
+// PUBLIC LIBRARY
+// --------------------------------------------------
+
+app.get(
+  "/api/library",
+  (req, res) => {
+
+    const library =
+      loadLibrary();
+
+
+    res.json(
+      library
+    );
+
+  }
+);
+
+
+// --------------------------------------------------
+// PDF SERVER
+// --------------------------------------------------
+
+app.get(
+  "/manuals/:filename",
+  (req, res) => {
+
+    const filename =
+      path.basename(
+        req.params.filename
+      );
+
+
+    const filePath =
+      path.join(
+        MANUALS_DIR,
+        filename
+      );
+
+
+    if (
+      !fs.existsSync(
+        filePath
+      )
+    ) {
+
+      return res
+        .status(404)
+        .send(
+          "Manual niet gevonden."
+        );
+
+    }
+
+
+    res.sendFile(
+      filePath
+    );
+
+  }
+);
+
+
+// --------------------------------------------------
 // AIRCRAFT TOEVOEGEN
-// ============================================================
+// --------------------------------------------------
 
 app.post(
-    "/api/admin/aircraft",
-    requireAdmin,
-    function(req, res) {
+  "/api/admin/aircraft",
+  requireAdmin,
+  (req, res) => {
 
-        const name =
-            String(
-                req.body.name || ""
-            ).trim();
+    const {
+      name
+    } = req.body;
 
-        if (!name) {
 
-            return res.status(400).json({
+    if (!name || !name.trim()) {
 
-                error:
-                    "Naam van het vliegtuig ontbreekt."
-
-            });
-
-        }
-
-        const library =
-            loadLibrary();
-
-        const aircraft = {
-
-            id:
-                crypto
-                    .randomBytes(8)
-                    .toString("hex"),
-
-            name,
-
-            manuals: []
-
-        };
-
-        library.aircraft.push(
-            aircraft
-        );
-
-        saveLibrary(
-            library
-        );
-
-        res.json({
-            success: true,
-            aircraft
+      return res
+        .status(400)
+        .json({
+          error:
+            "Aircraft naam ontbreekt."
         });
 
     }
+
+
+    const library =
+      loadLibrary();
+
+
+    const aircraft = {
+
+      id:
+        Date.now().toString(),
+
+      name:
+        name.trim(),
+
+      manuals: []
+
+    };
+
+
+    library.aircraft.push(
+      aircraft
+    );
+
+
+    saveLibrary(
+      library
+    );
+
+
+    res.json({
+      success: true,
+      aircraft
+    });
+
+  }
 );
 
 
-// ============================================================
-// AIRCRAFT NAAM WIJZIGEN
-// ============================================================
+// --------------------------------------------------
+// AIRCRAFT WIJZIGEN
+// --------------------------------------------------
 
 app.put(
-    "/api/admin/aircraft/:id",
-    requireAdmin,
-    function(req, res) {
+  "/api/admin/aircraft/:id",
+  requireAdmin,
+  (req, res) => {
 
-        const library =
-            loadLibrary();
+    const library =
+      loadLibrary();
 
-        const aircraft =
-            library.aircraft.find(
-                item =>
-                    item.id ===
-                    req.params.id
-            );
 
-        if (!aircraft) {
+    const aircraft =
+      library.aircraft.find(
+        a =>
+          String(a.id) ===
+          String(req.params.id)
+      );
 
-            return res.status(404).json({
 
-                error:
-                    "Vliegtuig niet gevonden."
+    if (!aircraft) {
 
-            });
-
-        }
-
-        const name =
-            String(
-                req.body.name || ""
-            ).trim();
-
-        if (!name) {
-
-            return res.status(400).json({
-
-                error:
-                    "Naam mag niet leeg zijn."
-
-            });
-
-        }
-
-        aircraft.name =
-            name;
-
-        saveLibrary(
-            library
-        );
-
-        res.json({
-            success: true,
-            aircraft
+      return res
+        .status(404)
+        .json({
+          error:
+            "Aircraft niet gevonden."
         });
 
     }
+
+
+    if (
+      req.body.name &&
+      req.body.name.trim()
+    ) {
+
+      aircraft.name =
+        req.body.name.trim();
+
+    }
+
+
+    saveLibrary(
+      library
+    );
+
+
+    res.json({
+      success: true,
+      aircraft
+    });
+
+  }
 );
 
 
-// ============================================================
+// --------------------------------------------------
 // AIRCRAFT VERWIJDEREN
-// ============================================================
+// --------------------------------------------------
 
 app.delete(
-    "/api/admin/aircraft/:id",
-    requireAdmin,
-    function(req, res) {
+  "/api/admin/aircraft/:id",
+  requireAdmin,
+  (req, res) => {
 
-        const library =
-            loadLibrary();
+    const library =
+      loadLibrary();
 
-        const index =
-            library.aircraft.findIndex(
-                item =>
-                    item.id ===
-                    req.params.id
-            );
 
-        if (index === -1) {
+    const index =
+      library.aircraft.findIndex(
+        a =>
+          String(a.id) ===
+          String(req.params.id)
+      );
 
-            return res.status(404).json({
 
-                error:
-                    "Vliegtuig niet gevonden."
+    if (index === -1) {
 
-            });
-
-        }
-
-        const aircraft =
-            library.aircraft[index];
-
-        // Verwijder alle PDF's
-        for (
-            const manual
-            of aircraft.manuals
-        ) {
-
-            const filePath =
-                path.join(
-                    MANUALS_DIR,
-                    manual.filename
-                );
-
-            if (
-                fs.existsSync(
-                    filePath
-                )
-            ) {
-
-                fs.unlinkSync(
-                    filePath
-                );
-
-            }
-
-        }
-
-        library.aircraft.splice(
-            index,
-            1
-        );
-
-        saveLibrary(
-            library
-        );
-
-        res.json({
-            success: true
+      return res
+        .status(404)
+        .json({
+          error:
+            "Aircraft niet gevonden."
         });
 
     }
-);
 
 
-// ============================================================
-// MANUALS UPLOADEN
-// ============================================================
+    const aircraft =
+      library.aircraft[index];
 
-app.post(
-    "/api/admin/manuals",
-    requireAdmin,
-    upload.array(
-        "manuals",
-        4
-    ),
-    function(req, res) {
 
-        try {
+    /*
+      Alle bijhorende PDF's verwijderen.
+    */
 
-            const aircraftId =
-                req.body.aircraftId;
+    for (
+      const manual of
+      aircraft.manuals || []
+    ) {
 
-            const library =
-                loadLibrary();
-
-            const aircraft =
-                library.aircraft.find(
-                    item =>
-                        item.id ===
-                        aircraftId
-                );
-
-            if (!aircraft) {
-
-                // Verwijder reeds geüploade bestanden
-                for (
-                    const file
-                    of req.files || []
-                ) {
-
-                    if (
-                        fs.existsSync(
-                            file.path
-                        )
-                    ) {
-
-                        fs.unlinkSync(
-                            file.path
-                        );
-
-                    }
-
-                }
-
-                return res.status(404).json({
-
-                    error:
-                        "Vliegtuig niet gevonden."
-
-                });
-
-            }
-
-
-            const currentCount =
-                aircraft.manuals.length;
-
-            const newCount =
-                currentCount +
-                req.files.length;
-
-            if (newCount > 4) {
-
-                for (
-                    const file
-                    of req.files
-                ) {
-
-                    if (
-                        fs.existsSync(
-                            file.path
-                        )
-                    ) {
-
-                        fs.unlinkSync(
-                            file.path
-                        );
-
-                    }
-
-                }
-
-                return res.status(400).json({
-
-                    error:
-                        "Een vliegtuig mag maximaal 4 manuals hebben."
-
-                });
-
-            }
-
-
-            for (
-                const file
-                of req.files
-            ) {
-
-                aircraft.manuals.push({
-
-                    id:
-                        crypto
-                            .randomBytes(8)
-                            .toString("hex"),
-
-                    name:
-                        path.basename(
-                            file.originalname,
-                            path.extname(
-                                file.originalname
-                            )
-                        ),
-
-                    filename:
-                        file.filename
-
-                });
-
-            }
-
-            saveLibrary(
-                library
-            );
-
-            res.json({
-
-                success: true,
-
-                aircraft
-
-            });
-
-        } catch (error) {
-
-            console.error(error);
-
-            res.status(500).json({
-
-                error:
-                    "Upload mislukt."
-
-            });
-
-        }
-
-    }
-);
-
-
-// ============================================================
-// MANUAL VERWIJDEREN
-// ============================================================
-
-app.delete(
-    "/api/admin/manuals/:id",
-    requireAdmin,
-    function(req, res) {
-
-        const library =
-            loadLibrary();
-
-        let foundManual = null;
-
-        let foundAircraft = null;
-
-        for (
-            const aircraft
-            of library.aircraft
-        ) {
-
-            const manual =
-                aircraft.manuals.find(
-                    item =>
-                        item.id ===
-                        req.params.id
-                );
-
-            if (manual) {
-
-                foundManual =
-                    manual;
-
-                foundAircraft =
-                    aircraft;
-
-                break;
-
-            }
-
-        }
-
-        if (
-            !foundManual ||
-            !foundAircraft
-        ) {
-
-            return res.status(404).json({
-
-                error:
-                    "Manual niet gevonden."
-
-            });
-
-        }
+      if (
+        manual.filename
+      ) {
 
         const filePath =
-            path.join(
-                MANUALS_DIR,
-                foundManual.filename
-            );
+          path.join(
+            MANUALS_DIR,
+            path.basename(
+              manual.filename
+            )
+          );
+
 
         if (
-            fs.existsSync(
-                filePath
-            )
+          fs.existsSync(
+            filePath
+          )
         ) {
 
-            fs.unlinkSync(
-                filePath
-            );
+          fs.unlinkSync(
+            filePath
+          );
 
         }
 
-        foundAircraft.manuals =
-            foundAircraft.manuals.filter(
-                manual =>
-                    manual.id !==
-                    req.params.id
-            );
-
-        saveLibrary(
-            library
-        );
-
-        res.json({
-            success: true
-        });
+      }
 
     }
+
+
+    library.aircraft.splice(
+      index,
+      1
+    );
+
+
+    saveLibrary(
+      library
+    );
+
+
+    res.json({
+      success: true
+    });
+
+  }
 );
 
 
-// ============================================================
+// --------------------------------------------------
+// MANUALS UPLOADEN
+// --------------------------------------------------
+
+app.post(
+  "/api/admin/manuals",
+  requireAdmin,
+  upload.array(
+    "manuals",
+    4
+  ),
+  (req, res) => {
+
+    const aircraftId =
+      req.query.aircraftId;
+
+
+    const type =
+      String(
+        req.query.type ||
+        req.body.type ||
+        "AMM"
+      ).toUpperCase();
+
+
+    if (
+      type !== "AMM" &&
+      type !== "IPC"
+    ) {
+
+      return res
+        .status(400)
+        .json({
+          error:
+            "Manual type moet AMM of IPC zijn."
+        });
+
+    }
+
+
+    const library =
+      loadLibrary();
+
+
+    const aircraft =
+      library.aircraft.find(
+        a =>
+          String(a.id) ===
+          String(aircraftId)
+      );
+
+
+    if (!aircraft) {
+
+      return res
+        .status(404)
+        .json({
+          error:
+            "Aircraft niet gevonden."
+        });
+
+    }
+
+
+    if (!aircraft.manuals) {
+
+      aircraft.manuals = [];
+
+    }
+
+
+    /*
+      Maximaal 4 manuals per aircraft.
+    */
+
+    if (
+      aircraft.manuals.length +
+      (req.files || []).length >
+      4
+    ) {
+
+      /*
+        Uploads die niet mogen blijven,
+        verwijderen.
+      */
+
+      for (
+        const file of
+        req.files || []
+      ) {
+
+        if (
+          fs.existsSync(
+            file.path
+          )
+        ) {
+
+          fs.unlinkSync(
+            file.path
+          );
+
+        }
+
+      }
+
+
+      return res
+        .status(400)
+        .json({
+          error:
+            "Maximum 4 manuals per aircraft."
+        });
+
+    }
+
+
+    const added =
+      [];
+
+
+    for (
+      const file of
+      req.files || []
+    ) {
+
+      const manual = {
+
+        id:
+          Date.now().toString() +
+          "_" +
+          Math.random()
+            .toString(36)
+            .substring(2, 8),
+
+        name:
+          path
+            .basename(
+              file.originalname,
+              path.extname(
+                file.originalname
+              )
+            ),
+
+        filename:
+          path.basename(
+            file.filename
+          ),
+
+        type:
+
+          type,
+
+        url:
+          "/manuals/" +
+          encodeURIComponent(
+            path.basename(
+              file.filename
+            )
+          )
+
+      };
+
+
+      aircraft.manuals.push(
+        manual
+      );
+
+
+      added.push(
+        manual
+      );
+
+    }
+
+
+    saveLibrary(
+      library
+    );
+
+
+    res.json({
+
+      success: true,
+
+      type,
+
+      manuals:
+        added
+
+    });
+
+  }
+);
+
+
+// --------------------------------------------------
+// MANUAL VERWIJDEREN
+// --------------------------------------------------
+
+app.delete(
+  "/api/admin/manuals/:id",
+  requireAdmin,
+  (req, res) => {
+
+    const library =
+      loadLibrary();
+
+
+    let foundManual =
+      null;
+
+
+    let foundAircraft =
+      null;
+
+
+    for (
+      const aircraft of
+      library.aircraft
+    ) {
+
+      const index =
+        (aircraft.manuals || [])
+          .findIndex(
+            manual =>
+              String(manual.id) ===
+              String(req.params.id)
+          );
+
+
+      if (index !== -1) {
+
+        foundAircraft =
+          aircraft;
+
+        foundManual =
+          aircraft.manuals[index];
+
+        aircraft.manuals.splice(
+          index,
+          1
+        );
+
+        break;
+
+      }
+
+    }
+
+
+    if (
+      !foundManual ||
+      !foundAircraft
+    ) {
+
+      return res
+        .status(404)
+        .json({
+          error:
+            "Manual niet gevonden."
+        });
+
+    }
+
+
+    if (
+      foundManual.filename
+    ) {
+
+      const filePath =
+        path.join(
+          MANUALS_DIR,
+          path.basename(
+            foundManual.filename
+          )
+        );
+
+
+      if (
+        fs.existsSync(
+          filePath
+        )
+      ) {
+
+        fs.unlinkSync(
+          filePath
+        );
+
+      }
+
+    }
+
+
+    saveLibrary(
+      library
+    );
+
+
+    res.json({
+      success: true
+    });
+
+  }
+);
+
+
+// --------------------------------------------------
+// ADMIN PAGE
+// --------------------------------------------------
+
+app.get(
+  "/admin",
+  (req, res) => {
+
+    res.sendFile(
+      path.join(
+        __dirname,
+        "public",
+        "admin.html"
+      )
+    );
+
+  }
+);
+
+
+// --------------------------------------------------
 // PUBLIC WEBSITE
-// ============================================================
+// --------------------------------------------------
 
 app.use(
-    express.static(
-        PUBLIC_DIR
+  express.static(
+    path.join(
+      __dirname,
+      "public"
     )
+  )
 );
 
 
-// /admin naar admin.html
+// --------------------------------------------------
+// ALLE ANDERE PAGINA'S
+// --------------------------------------------------
+
 app.get(
-    "/admin",
-    function(req, res) {
+  "*",
+  (req, res) => {
 
-        res.sendFile(
-            path.join(
-                PUBLIC_DIR,
-                "admin.html"
-            )
-        );
+    res.sendFile(
+      path.join(
+        __dirname,
+        "public",
+        "index.html"
+      )
+    );
 
-    }
+  }
 );
 
 
-// Andere routes naar index.html
-app.get(
-    "*",
-    function(req, res) {
-
-        res.sendFile(
-            path.join(
-                PUBLIC_DIR,
-                "index.html"
-            )
-        );
-
-    }
-);
-
-
-// ============================================================
+// --------------------------------------------------
 // FOUTAFHANDELING
-// ============================================================
+// --------------------------------------------------
 
 app.use(
-    function(error, req, res, next) {
+  (
+    error,
+    req,
+    res,
+    next
+  ) => {
 
-        console.error(error);
+    console.error(
+      error
+    );
 
-        if (
-            error instanceof multer.MulterError
-        ) {
 
-            return res.status(400).json({
+    res
+      .status(500)
+      .json({
+        error:
+          error.message ||
+          "Server error."
+      });
 
-                error:
-                    "Uploadfout: " +
-                    error.message
-
-            });
-
-        }
-
-        res.status(500).json({
-
-            error:
-                error.message ||
-                "Er is een serverfout opgetreden."
-
-        });
-
-    }
+  }
 );
 
 
-// ============================================================
+// --------------------------------------------------
 // SERVER STARTEN
-// ============================================================
+// --------------------------------------------------
 
 app.listen(
-    PORT,
-    function() {
+  PORT,
+  () => {
 
-        console.log(
-            `VlocX Kyran server draait op poort ${PORT}`
-        );
+    console.log(
+      `VlocX Kyran draait op poort ${PORT}`
+    );
 
-    }
+  }
 );
