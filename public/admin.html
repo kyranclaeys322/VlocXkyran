@@ -1,1408 +1,914 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VlocX Kyran - Admin</title>
 
-    <title>VlocX Kyran - Admin</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-    <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111827;
+      color: white;
+    }
 
-        * {
-            box-sizing: border-box;
-        }
+    header {
+      background: #0b1220;
+      padding: 18px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #263247;
+    }
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #e2e8f0;
-            color: #1e293b;
-        }
+    h1 {
+      margin: 0;
+      font-size: 22px;
+    }
 
-        header {
-            height: 60px;
-            background: #071930;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 25px;
-            border-bottom: 2px solid #00a9e0;
-        }
+    button {
+      border: none;
+      border-radius: 6px;
+      padding: 10px 15px;
+      cursor: pointer;
+      color: white;
+      background: #2563eb;
+    }
 
-        .logo {
-            font-size: 21px;
-            font-weight: bold;
-        }
+    button:hover {
+      opacity: .9;
+    }
 
-        .logo span {
-            color: #00a9e0;
-            font-weight: normal;
-        }
+    .logout {
+      background: #dc2626;
+    }
 
-        button {
-            border: none;
-            border-radius: 4px;
-            padding: 9px 14px;
-            cursor: pointer;
-            font-weight: bold;
-        }
+    main {
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
 
-        .blue-button {
-            background: #0284c7;
-            color: white;
-        }
+    .card {
+      background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
 
-        .blue-button:hover {
-            background: #0369a1;
-        }
+    h2 {
+      margin-top: 0;
+    }
 
-        .red-button {
-            background: #dc2626;
-            color: white;
-        }
+    input,
+    select {
+      width: 100%;
+      background: #111827;
+      color: white;
+      border: 1px solid #4b5563;
+      border-radius: 6px;
+      padding: 11px;
+      margin: 6px 0 12px;
+    }
 
-        .red-button:hover {
-            background: #b91c1c;
-        }
+    label {
+      display: block;
+      font-size: 13px;
+      color: #d1d5db;
+      margin-top: 10px;
+    }
 
-        .gray-button {
-            background: #64748b;
-            color: white;
-        }
+    .aircraft {
+      background: #111827;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 15px;
+    }
 
-        .green-button {
-            background: #16a34a;
-            color: white;
-        }
+    .aircraft-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
 
-        .login-container {
-            width: 100%;
-            max-width: 420px;
-            margin: 80px auto;
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 5px 20px rgba(0,0,0,.15);
-        }
+    .aircraft-name {
+      font-size: 18px;
+      font-weight: bold;
+    }
 
-        .login-container h1 {
-            margin-top: 0;
-            color: #071930;
-        }
+    .danger {
+      background: #dc2626;
+    }
 
-        .login-container p {
-            color: #64748b;
-            font-size: 13px;
-        }
+    .manual {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      background: #1f2937;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 8px;
+    }
 
-        label {
-            display: block;
-            font-size: 12px;
-            font-weight: bold;
-            margin-top: 18px;
-            margin-bottom: 6px;
-        }
+    .manual-type {
+      font-size: 12px;
+      font-weight: bold;
+      padding: 4px 7px;
+      border-radius: 4px;
+      background: #2563eb;
+    }
 
-        input,
-        select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            font-size: 14px;
-        }
+    .message {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      display: none;
+    }
 
-        .login-button {
-            width: 100%;
-            margin-top: 22px;
-            background: #071930;
-            color: white;
-        }
+    .error {
+      background: #7f1d1d;
+    }
 
-        .login-button:hover {
-            background: #0284c7;
-        }
+    .success {
+      background: #14532d;
+    }
 
-        .error {
-            color: #dc2626;
-            background: #fee2e2;
-            border: 1px solid #fecaca;
-            padding: 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            margin-top: 15px;
-            display: none;
-        }
+    .hidden {
+      display: none;
+    }
 
-        .success {
-            color: #166534;
-            background: #dcfce7;
-            border: 1px solid #bbf7d0;
-            padding: 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            margin-top: 15px;
-            display: none;
-        }
-
-        #dashboard {
-            display: none;
-        }
-
-        .dashboard {
-            max-width: 1200px;
-            margin: 25px auto;
-            padding: 0 20px;
-        }
-
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .topbar h1 {
-            margin: 0;
-            color: #071930;
-        }
-
-        .topbar-buttons {
-            display: flex;
-            gap: 8px;
-        }
-
-        .add-aircraft {
-            background: white;
-            padding: 20px;
-            border-radius: 7px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.08);
-            margin-bottom: 20px;
-        }
-
-        .add-aircraft h2 {
-            margin-top: 0;
-            font-size: 17px;
-            color: #071930;
-        }
-
-        .add-row {
-            display: flex;
-            gap: 8px;
-        }
-
-        .add-row input {
-            flex: 1;
-        }
-
-        .aircraft-card {
-            background: white;
-            border-radius: 7px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.08);
-        }
-
-        .aircraft-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .aircraft-name {
-            display: flex;
-            gap: 8px;
-            flex: 1;
-        }
-
-        .aircraft-name input {
-            max-width: 400px;
-            font-weight: bold;
-        }
-
-        .aircraft-actions {
-            display: flex;
-            gap: 6px;
-        }
-
-        .manuals-title {
-            font-size: 13px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #475569;
-        }
-
-        .manual-list {
-            margin-bottom: 15px;
-        }
-
-        .manual {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            padding: 10px;
-            margin-bottom: 6px;
-            background: #f8fafc;
-        }
-
-        .manual-name {
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .manual-id {
-            color: #64748b;
-            font-size: 10px;
-            margin-top: 3px;
-        }
-
-        .upload-area {
-            border: 2px dashed #cbd5e1;
-            padding: 18px;
-            border-radius: 5px;
-            background: #f8fafc;
-        }
-
-        .upload-area:hover {
-            border-color: #0284c7;
-        }
-
-        .upload-area input {
-            background: white;
-        }
-
-        .upload-info {
-            font-size: 11px;
-            color: #64748b;
-            margin: 8px 0;
-        }
-
-        .status {
-            margin-top: 10px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .empty {
-            color: #64748b;
-            font-size: 12px;
-            padding: 10px 0;
-        }
-
-        @media(max-width:700px) {
-
-            .aircraft-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .aircraft-actions {
-                justify-content: flex-start;
-            }
-
-            .add-row {
-                flex-direction: column;
-            }
-
-            .manual {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-
-            .topbar {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-
-        }
-
-    </style>
-
+    .login {
+      max-width: 400px;
+      margin: 100px auto;
+      padding: 20px;
+    }
+  </style>
 </head>
 
 <body>
 
-
 <header>
+  <h1>VlocX Kyran — Admin</h1>
 
-    <div class="logo">
-        VlocX <span>Kyran</span> — ADMIN
-    </div>
-
-    <div>
-        <button
-            class="gray-button"
-            onclick="window.location.href='/'">
-            ← Website
-        </button>
-    </div>
-
+  <button
+    id="logoutBtn"
+    class="logout hidden"
+    onclick="logout()">
+    Uitloggen
+  </button>
 </header>
 
 
-<!-- ============================================================
-     LOGIN
-============================================================ -->
+<!-- LOGIN -->
 
-<div id="loginPage">
+<div id="loginScreen" class="login">
 
-    <div class="login-container">
+  <div class="card">
 
-        <h1>🔐 Admin Login</h1>
+    <h2>Admin login</h2>
 
-        <p>
-            Log in om de VlocX manuals te beheren.
-        </p>
+    <div id="loginMessage" class="message error"></div>
 
-        <label>
-            Gebruikersnaam
-        </label>
+    <label>Gebruikersnaam</label>
 
-        <input
-            type="text"
-            id="username"
-            autocomplete="username"
-            placeholder="Gebruikersnaam">
+    <input
+      id="username"
+      type="text"
+      autocomplete="username">
 
 
-        <label>
-            Wachtwoord
-        </label>
+    <label>Wachtwoord</label>
 
-        <input
-            type="password"
-            id="password"
-            autocomplete="current-password"
-            placeholder="Wachtwoord"
-            onkeydown="
-                if(event.key === 'Enter') {
-                    login();
-                }
-            ">
+    <input
+      id="password"
+      type="password"
+      autocomplete="current-password">
 
 
-        <button
-            class="login-button"
-            onclick="login()">
-            INLOGGEN
-        </button>
+    <button onclick="login()">
+      Inloggen
+    </button>
 
-
-        <div
-            id="loginError"
-            class="error">
-        </div>
-
-    </div>
+  </div>
 
 </div>
 
 
-<!-- ============================================================
-     DASHBOARD
-============================================================ -->
+<!-- ADMIN -->
 
-<div id="dashboard">
+<main id="adminScreen" class="hidden">
 
-    <div class="dashboard">
-
-        <div class="topbar">
-
-            <div>
-
-                <h1>
-                    Manual Beheer
-                </h1>
-
-                <div style="
-                    color:#64748b;
-                    font-size:12px;
-                    margin-top:5px;
-                ">
-                    VlocX Kyran
-                </div>
-
-            </div>
-
-            <div class="topbar-buttons">
-
-                <button
-                    class="blue-button"
-                    onclick="loadLibrary()">
-                    ↻ Vernieuwen
-                </button>
-
-                <button
-                    class="red-button"
-                    onclick="logout()">
-                    Uitloggen
-                </button>
-
-            </div>
-
-        </div>
+  <div id="message" class="message"></div>
 
 
-        <!-- AIRCRAFT TOEVOEGEN -->
+  <!-- AIRCRAFT TOEVOEGEN -->
 
-        <div class="add-aircraft">
+  <div class="card">
 
-            <h2>
-                ✈️ Aircraft toevoegen
-            </h2>
+    <h2>Aircraft toevoegen</h2>
 
-            <div class="add-row">
+    <label>Aircraft naam</label>
 
-                <input
-                    id="newAircraftName"
-                    type="text"
-                    placeholder="Bijvoorbeeld: Airbus A320">
+    <input
+      id="aircraftName"
+      type="text"
+      placeholder="Bijvoorbeeld A320">
 
-                <button
-                    class="green-button"
-                    onclick="addAircraft()">
-                    + Aircraft toevoegen
-                </button>
+    <button onclick="addAircraft()">
+      Aircraft toevoegen
+    </button>
 
-            </div>
-
-            <div
-                id="aircraftMessage"
-                class="status">
-            </div>
-
-        </div>
+  </div>
 
 
-        <!-- AIRCRAFT LIST -->
+  <!-- AIRCRAFT -->
 
-        <div id="aircraftList">
+  <div class="card">
 
-            <div class="empty">
-                Laden...
-            </div>
+    <h2>Aircraft & manuals</h2>
 
-        </div>
+    <div id="aircraftList"></div>
 
-    </div>
+  </div>
 
-</div>
+</main>
 
 
 <script>
 
-/* ============================================================
-   LOGIN CHECK
-============================================================ */
+  let library = {
+    aircraft: []
+  };
 
-async function checkLogin() {
+
+  async function api(url, options = {}) {
+
+    const response =
+      await fetch(url, {
+        credentials: "include",
+        ...options
+      });
+
+
+    const data =
+      await response.json()
+        .catch(() => ({}));
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error || "Er ging iets fout."
+      );
+
+    }
+
+
+    return data;
+
+  }
+
+
+  async function checkLogin() {
 
     try {
 
-        const response =
-            await fetch(
-                "/api/me"
-            );
+      const data =
+        await api("/api/me");
 
-        const data =
-            await response.json();
 
-        if (data.loggedIn) {
+      if (data.loggedIn) {
 
-            showDashboard();
+        showAdmin();
 
-        } else {
-
-            showLogin();
-
-        }
-
-    } catch(error) {
+      } else {
 
         showLogin();
 
+      }
+
+    } catch {
+
+      showLogin();
+
     }
 
-}
+  }
 
 
-/* ============================================================
-   LOGIN
-============================================================ */
+  function showLogin() {
 
-async function login() {
+    document
+      .getElementById("loginScreen")
+      .classList.remove("hidden");
+
+    document
+      .getElementById("adminScreen")
+      .classList.add("hidden");
+
+    document
+      .getElementById("logoutBtn")
+      .classList.add("hidden");
+
+  }
+
+
+  function showAdmin() {
+
+    document
+      .getElementById("loginScreen")
+      .classList.add("hidden");
+
+    document
+      .getElementById("adminScreen")
+      .classList.remove("hidden");
+
+    document
+      .getElementById("logoutBtn")
+      .classList.remove("hidden");
+
+    loadLibrary();
+
+  }
+
+
+  async function login() {
 
     const username =
-        document.getElementById(
-            "username"
-        ).value;
+      document.getElementById("username").value;
 
     const password =
-        document.getElementById(
-            "password"
-        ).value;
+      document.getElementById("password").value;
 
-    const errorBox =
-        document.getElementById(
-            "loginError"
-        );
 
-    errorBox.style.display =
-        "none";
+    const message =
+      document.getElementById("loginMessage");
+
 
     try {
 
-        const response =
-            await fetch(
-                "/api/login",
-                {
+      await api("/api/login", {
 
-                    method:"POST",
+        method: "POST",
 
-                    headers:{
-                        "Content-Type":
-                            "application/json"
-                    },
+        headers: {
+          "Content-Type": "application/json"
+        },
 
-                    body:
-                        JSON.stringify({
-                            username,
-                            password
-                        })
+        body: JSON.stringify({
+          username,
+          password
+        })
 
-                }
-            );
+      });
 
-        const data =
-            await response.json();
 
-        if (!response.ok) {
+      showAdmin();
 
-            throw new Error(
-                data.error ||
-                "Inloggen mislukt."
-            );
 
-        }
+    } catch (error) {
 
-        showDashboard();
+      message.textContent =
+        error.message;
 
-    } catch(error) {
-
-        errorBox.innerText =
-            error.message;
-
-        errorBox.style.display =
-            "block";
+      message.style.display =
+        "block";
 
     }
 
-}
+  }
 
 
-/* ============================================================
-   LOGOUT
-============================================================ */
+  async function logout() {
 
-async function logout() {
-
-    await fetch(
-        "/api/logout",
-        {
-            method:"POST"
-        }
-    );
+    await api("/api/logout", {
+      method: "POST"
+    });
 
     showLogin();
 
-}
+  }
 
 
-/* ============================================================
-   PAGINA'S
-============================================================ */
+  async function loadLibrary() {
 
-function showLogin() {
+    library =
+      await api("/api/library");
 
-    document.getElementById(
-        "loginPage"
-    ).style.display =
-        "block";
+    renderAircraft();
 
-    document.getElementById(
-        "dashboard"
-    ).style.display =
-        "none";
-
-}
+  }
 
 
-async function showDashboard() {
-
-    document.getElementById(
-        "loginPage"
-    ).style.display =
-        "none";
-
-    document.getElementById(
-        "dashboard"
-    ).style.display =
-        "block";
-
-    await loadLibrary();
-
-}
-
-
-/* ============================================================
-   LIBRARY
-============================================================ */
-
-async function loadLibrary() {
+  function renderAircraft() {
 
     const container =
-        document.getElementById(
-            "aircraftList"
-        );
-
-    container.innerHTML =
-        `<div class="empty">
-            Manuals laden...
-         </div>`;
-
-    try {
-
-        const response =
-            await fetch(
-                "/api/library"
-            );
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Library kon niet worden geladen."
-            );
-
-        }
-
-        const data =
-            await response.json();
-
-        renderAircraft(
-            data.aircraft || []
-        );
-
-    } catch(error) {
-
-        container.innerHTML =
-            `<div class="error"
-                style="display:block;">
-                ${escapeHtml(
-                    error.message
-                )}
-             </div>`;
-
-    }
-
-}
-
-
-/* ============================================================
-   AIRCRAFT TONEN
-============================================================ */
-
-function renderAircraft(
-    aircraftList
-) {
-
-    const container =
-        document.getElementById(
-            "aircraftList"
-        );
+      document.getElementById("aircraftList");
 
     container.innerHTML = "";
 
-    if (!aircraftList.length) {
 
-        container.innerHTML =
-            `<div class="empty">
-                Er zijn nog geen aircrafts.
-             </div>`;
+    if (!library.aircraft ||
+        library.aircraft.length === 0) {
 
-        return;
+      container.innerHTML = `
+        <p>Er zijn nog geen aircraft toegevoegd.</p>
+      `;
+
+      return;
 
     }
 
-    aircraftList.forEach(
-        aircraft => {
 
-            const card =
-                document.createElement(
-                    "div"
-                );
+    library.aircraft.forEach(aircraft => {
 
-            card.className =
-                "aircraft-card";
+      const div =
+        document.createElement("div");
 
-            const manuals =
-                aircraft.manuals || [];
-
-            card.innerHTML = `
-
-                <div class="aircraft-header">
-
-                    <div class="aircraft-name">
-
-                        <input
-                            id="aircraft-name-${escapeHtml(
-                                aircraft.id
-                            )}"
-                            value="${escapeHtml(
-                                aircraft.name
-                            )}">
-
-                    </div>
-
-                    <div class="aircraft-actions">
-
-                        <button
-                            class="blue-button"
-                            onclick="renameAircraft(
-                                '${escapeJs(
-                                    aircraft.id
-                                )}'
-                            )">
-                            Opslaan
-                        </button>
-
-                        <button
-                            class="red-button"
-                            onclick="deleteAircraft(
-                                '${escapeJs(
-                                    aircraft.id
-                                )}',
-                                '${escapeJs(
-                                    aircraft.name
-                                )}'
-                            )">
-                            Verwijderen
-                        </button>
-
-                    </div>
-
-                </div>
+      div.className =
+        "aircraft";
 
 
-                <div class="manuals-title">
-
-                    Manuals
-                    (${manuals.length} / 4)
-
-                </div>
+      const manuals =
+        aircraft.manuals || [];
 
 
-                <div class="manual-list">
+      div.innerHTML = `
 
-                    ${
-                        manuals.length
-                        ? manuals.map(
-                            manual => `
+        <div class="aircraft-header">
 
-                                <div class="manual">
+          <div class="aircraft-name">
+            ${escapeHtml(aircraft.name)}
+          </div>
 
-                                    <div>
+          <div>
 
-                                        <div class="manual-name">
-                                            📕
-                                            ${escapeHtml(
-                                                manual.name
-                                            )}
-                                        </div>
+            <button
+              onclick="renameAircraft('${aircraft.id}')">
+              Naam wijzigen
+            </button>
 
-                                        <div class="manual-id">
-                                            Manual ID:
-                                            ${escapeHtml(
-                                                manual.id
-                                            )}
-                                        </div>
+            <button
+              class="danger"
+              onclick="deleteAircraft('${aircraft.id}')">
+              Verwijderen
+            </button>
 
-                                    </div>
+          </div>
 
-                                    <button
-                                        class="red-button"
-                                        onclick="deleteManual(
-                                            '${escapeJs(
-                                                manual.id
-                                            )}',
-                                            '${escapeJs(
-                                                manual.name
-                                            )}'
-                                        )">
-                                        Verwijderen
-                                    </button>
+        </div>
 
-                                </div>
 
-                            `
-                        ).join("")
-                        :
-                        `<div class="empty">
-                            Nog geen manuals toegevoegd.
-                         </div>`
-                    }
+        <h3>Manual toevoegen</h3>
+
+        <label>Manual type</label>
+
+        <select id="type-${aircraft.id}">
+
+          <option value="AMM">
+            AMM
+          </option>
+
+          <option value="IPC">
+            IPC
+          </option>
+
+        </select>
+
+
+        <label>PDF bestand</label>
+
+        <input
+          id="file-${aircraft.id}"
+          type="file"
+          accept="application/pdf">
+
+
+        <button
+          onclick="uploadManual('${aircraft.id}')">
+          Manual uploaden
+        </button>
+
+
+        <h3>Manuals</h3>
+
+        <div>
+
+          ${
+            manuals.length
+            ? manuals.map(manual => `
+
+              <div class="manual">
+
+                <div>
+
+                  <span class="manual-type">
+                    ${escapeHtml(
+                      manual.type || "AMM"
+                    )}
+                  </span>
+
+                  ${escapeHtml(
+                    manual.name ||
+                    manual.filename ||
+                    "Manual"
+                  )}
 
                 </div>
 
 
-                ${
-                    manuals.length < 4
-                    ?
-                    `
+                <button
+                  class="danger"
+                  onclick="deleteManual('${manual.id}')">
+                  Verwijderen
+                </button>
 
-                    <div class="upload-area">
+              </div>
 
-                        <strong>
-                            📤 Manual toevoegen
-                        </strong>
+            `).join("")
 
-                        <div class="upload-info">
-                            Kies maximaal
-                            ${4 - manuals.length}
-                            PDF-bestand(en).
-                        </div>
+            : "<p>Geen manuals.</p>"
+          }
 
-                        <input
-                            type="file"
-                            id="files-${escapeHtml(
-                                aircraft.id
-                            )}"
-                            accept=".pdf,application/pdf"
-                            multiple>
+        </div>
 
-                        <br><br>
-
-                        <button
-                            class="green-button"
-                            onclick="uploadManuals(
-                                '${escapeJs(
-                                    aircraft.id
-                                )}'
-                            )">
-                            ⬆ Manuals uploaden
-                        </button>
-
-                        <div
-                            id="upload-status-${escapeHtml(
-                                aircraft.id
-                            )}"
-                            class="status">
-                        </div>
-
-                    </div>
-
-                    `
-                    :
-                    `
-                    <div style="
-                        padding:12px;
-                        background:#fef3c7;
-                        border:1px solid #fde68a;
-                        border-radius:4px;
-                        font-size:12px;
-                    ">
-                        ⚠️ Dit aircraft heeft al
-                        4 manuals.
-                    </div>
-                    `
-                }
-
-            `;
-
-            container.appendChild(
-                card
-            );
-
-        }
-    );
-
-}
+      `;
 
 
-/* ============================================================
-   AIRCRAFT TOEVOEGEN
-============================================================ */
+      container.appendChild(div);
 
-async function addAircraft() {
+    });
 
-    const input =
-        document.getElementById(
-            "newAircraftName"
-        );
+  }
+
+
+  async function addAircraft() {
 
     const name =
-        input.value.trim();
+      document
+        .getElementById("aircraftName")
+        .value
+        .trim();
 
-    const message =
-        document.getElementById(
-            "aircraftMessage"
-        );
-
-    message.innerText = "";
 
     if (!name) {
 
-        message.style.color =
-            "#dc2626";
+      showMessage(
+        "Vul een aircraft naam in.",
+        true
+      );
 
-        message.innerText =
-            "Vul eerst een naam in.";
-
-        return;
+      return;
 
     }
+
 
     try {
 
-        const response =
-            await fetch(
-                "/api/admin/aircraft",
-                {
+      await api("/api/admin/aircraft", {
 
-                    method:"POST",
+        method: "POST",
 
-                    headers:{
-                        "Content-Type":
-                            "application/json"
-                    },
+        headers: {
+          "Content-Type": "application/json"
+        },
 
-                    body:
-                        JSON.stringify({
-                            name
-                        })
+        body: JSON.stringify({
+          name
+        })
 
-                }
-            );
+      });
 
-        const data =
-            await response.json();
 
-        if (!response.ok) {
+      document
+        .getElementById("aircraftName")
+        .value = "";
 
-            throw new Error(
-                data.error ||
-                "Aircraft toevoegen mislukt."
-            );
 
-        }
+      showMessage(
+        "Aircraft toegevoegd."
+      );
 
-        input.value = "";
 
-        message.style.color =
-            "#16a34a";
+      loadLibrary();
 
-        message.innerText =
-            "Aircraft toegevoegd.";
 
-        await loadLibrary();
+    } catch (error) {
 
-    } catch(error) {
-
-        message.style.color =
-            "#dc2626";
-
-        message.innerText =
-            error.message;
+      showMessage(
+        error.message,
+        true
+      );
 
     }
 
-}
+  }
 
 
-/* ============================================================
-   AIRCRAFT HERNOEMEN
-============================================================ */
+  async function renameAircraft(id) {
 
-async function renameAircraft(
-    id
-) {
+    const aircraft =
+      library.aircraft.find(
+        a => String(a.id) === String(id)
+      );
 
-    const input =
-        document.getElementById(
-            "aircraft-name-" + id
-        );
 
     const name =
-        input.value.trim();
+      prompt(
+        "Nieuwe naam:",
+        aircraft?.name || ""
+      );
 
-    if (!name) {
 
-        alert(
-            "De naam mag niet leeg zijn."
-        );
+    if (!name) return;
 
-        return;
-
-    }
 
     try {
 
-        const response =
-            await fetch(
-                "/api/admin/aircraft/" +
-                encodeURIComponent(id),
-                {
+      await api(
+        `/api/admin/aircraft/${id}`,
+        {
+          method: "PUT",
 
-                    method:"PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
 
-                    headers:{
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify({
-                            name
-                        })
-
-                }
-            );
-
-        const data =
-            await response.json();
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.error ||
-                "Opslaan mislukt."
-            );
-
+          body: JSON.stringify({
+            name
+          })
         }
+      );
 
-        alert(
-            "Aircraft opgeslagen."
-        );
 
-        await loadLibrary();
+      showMessage(
+        "Aircraft aangepast."
+      );
 
-    } catch(error) {
 
-        alert(
-            error.message
-        );
+      loadLibrary();
+
+
+    } catch (error) {
+
+      showMessage(
+        error.message,
+        true
+      );
 
     }
 
-}
+  }
 
 
-/* ============================================================
-   AIRCRAFT VERWIJDEREN
-============================================================ */
+  async function deleteAircraft(id) {
 
-async function deleteAircraft(
-    id,
-    name
-) {
+    if (!confirm(
+      "Aircraft en alle manuals verwijderen?"
+    )) return;
 
-    const confirmed =
-        confirm(
-            `Weet je zeker dat je "${name}" wilt verwijderen?\n\n`
-            +
-            "Alle manuals van dit aircraft worden ook verwijderd."
-        );
-
-    if (!confirmed) {
-        return;
-    }
 
     try {
 
-        const response =
-            await fetch(
-                "/api/admin/aircraft/" +
-                encodeURIComponent(id),
-                {
-                    method:"DELETE"
-                }
-            );
-
-        const data =
-            await response.json();
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.error ||
-                "Verwijderen mislukt."
-            );
-
+      await api(
+        `/api/admin/aircraft/${id}`,
+        {
+          method: "DELETE"
         }
+      );
 
-        await loadLibrary();
 
-    } catch(error) {
+      showMessage(
+        "Aircraft verwijderd."
+      );
 
-        alert(
-            error.message
-        );
+
+      loadLibrary();
+
+
+    } catch (error) {
+
+      showMessage(
+        error.message,
+        true
+      );
 
     }
 
-}
+  }
 
 
-/* ============================================================
-   MANUALS UPLOADEN
-============================================================ */
+  async function uploadManual(aircraftId) {
 
-async function uploadManuals(
-    aircraftId
-) {
+    const fileInput =
+      document.getElementById(
+        `file-${aircraftId}`
+      );
 
-    const input =
-        document.getElementById(
-            "files-" + aircraftId
-        );
 
-    const status =
-        document.getElementById(
-            "upload-status-" +
-            aircraftId
-        );
+    const typeSelect =
+      document.getElementById(
+        `type-${aircraftId}`
+      );
+
+
+    const file =
+      fileInput.files[0];
+
+
+    const type =
+      typeSelect.value;
+
+
+    if (!file) {
+
+      showMessage(
+        "Kies eerst een PDF.",
+        true
+      );
+
+      return;
+
+    }
+
 
     if (
-        !input.files ||
-        !input.files.length
+      file.type !== "application/pdf" &&
+      !file.name.toLowerCase().endsWith(".pdf")
     ) {
 
-        status.style.color =
-            "#dc2626";
+      showMessage(
+        "Alleen PDF-bestanden zijn toegestaan.",
+        true
+      );
 
-        status.innerText =
-            "Kies eerst minstens één PDF.";
-
-        return;
-
-    }
-
-    if (input.files.length > 4) {
-
-        status.style.color =
-            "#dc2626";
-
-        status.innerText =
-            "Je kunt maximaal 4 bestanden tegelijk kiezen.";
-
-        return;
+      return;
 
     }
 
-    for (
-        const file
-        of input.files
-    ) {
-
-        if (
-            !file.name
-                .toLowerCase()
-                .endsWith(".pdf")
-        ) {
-
-            status.style.color =
-                "#dc2626";
-
-            status.innerText =
-                "Alle bestanden moeten PDF-bestanden zijn.";
-
-            return;
-
-        }
-
-    }
 
     const formData =
-        new FormData();
+      new FormData();
+
 
     formData.append(
-        "aircraftId",
-        aircraftId
+      "manuals",
+      file
     );
 
-    for (
-        const file
-        of input.files
-    ) {
 
-        formData.append(
-            "manuals",
-            file
-        );
+    formData.append(
+      "type",
+      type
+    );
 
-    }
-
-    status.style.color =
-        "#0284c7";
-
-    status.innerText =
-        "Uploaden... Even wachten.";
 
     try {
 
-        const response =
-            await fetch(
-                "/api/admin/manuals",
-                {
-
-                    method:"POST",
-
-                    body:formData
-
-                }
-            );
-
-        const data =
-            await response.json();
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.error ||
-                "Upload mislukt."
-            );
-
-        }
-
-        status.style.color =
-            "#16a34a";
-
-        status.innerText =
-            "Manual(s) succesvol toegevoegd.";
-
-        input.value = "";
-
-        await loadLibrary();
-
-    } catch(error) {
-
-        status.style.color =
-            "#dc2626";
-
-        status.innerText =
-            error.message;
-
-    }
-
-}
+      showMessage(
+        "Manual wordt geüpload..."
+      );
 
 
-/* ============================================================
-   MANUAL VERWIJDEREN
-============================================================ */
-
-async function deleteManual(
-    id,
-    name
-) {
-
-    const confirmed =
-        confirm(
-            `Weet je zeker dat je deze manual wilt verwijderen?\n\n${name}`
+      const response =
+        await fetch(
+          `/api/admin/manuals?aircraftId=${encodeURIComponent(aircraftId)}&type=${encodeURIComponent(type)}`,
+          {
+            method: "POST",
+            credentials: "include",
+            body: formData
+          }
         );
 
-    if (!confirmed) {
-        return;
+
+      const data =
+        await response.json();
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          data.error ||
+          "Upload mislukt."
+        );
+
+      }
+
+
+      showMessage(
+        `${type} manual toegevoegd.`
+      );
+
+
+      fileInput.value = "";
+
+
+      loadLibrary();
+
+
+    } catch (error) {
+
+      showMessage(
+        error.message,
+        true
+      );
+
     }
+
+  }
+
+
+  async function deleteManual(id) {
+
+    if (!confirm(
+      "Deze manual verwijderen?"
+    )) return;
+
 
     try {
 
-        const response =
-            await fetch(
-                "/api/admin/manuals/" +
-                encodeURIComponent(id),
-                {
-
-                    method:"DELETE"
-
-                }
-            );
-
-        const data =
-            await response.json();
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.error ||
-                "Manual verwijderen mislukt."
-            );
-
+      await api(
+        `/api/admin/manuals/${id}`,
+        {
+          method: "DELETE"
         }
+      );
 
-        await loadLibrary();
 
-    } catch(error) {
+      showMessage(
+        "Manual verwijderd."
+      );
 
-        alert(
-            error.message
-        );
+
+      loadLibrary();
+
+
+    } catch (error) {
+
+      showMessage(
+        error.message,
+        true
+      );
 
     }
 
-}
+  }
 
 
-/* ============================================================
-   VEILIGE TEKST
-============================================================ */
+  function showMessage(
+    message,
+    error = false
+  ) {
 
-function escapeHtml(value) {
-
-    return String(value || "")
-        .replace(
-            /[&<>'"]/g,
-            character => ({
-
-                "&":"&amp;",
-                "<":"&lt;",
-                ">":"&gt;",
-                "'":"&#39;",
-                '"':"&quot;"
-
-            })[character]
-        );
-
-}
+    const element =
+      document.getElementById("message");
 
 
-function escapeJs(value) {
+    element.textContent =
+      message;
 
-    return String(value || "")
-        .replace(
-            /\\/g,
-            "\\\\"
-        )
-        .replace(
-            /'/g,
-            "\\'"
-        );
+    element.className =
+      "message " +
+      (error ? "error" : "success");
 
-}
+    element.style.display =
+      "block";
 
 
-/* ============================================================
-   START
-============================================================ */
+    setTimeout(() => {
 
-checkLogin();
+      element.style.display =
+        "none";
+
+    }, 5000);
+
+  }
+
+
+  function escapeHtml(value) {
+
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  }
+
+
+  checkLogin();
 
 </script>
 
