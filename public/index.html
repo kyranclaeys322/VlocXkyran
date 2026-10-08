@@ -94,7 +94,7 @@
             position: relative;
         }
 
-        /* BEGINSCHERM / WELKOMSTOVERLAY */
+        /* BEGINSCHERM / WELKOMSTOVERLAY MET CODE */
         #welcomeOverlay {
             position: absolute;
             top: 0;
@@ -117,7 +117,7 @@
             border: 1px solid #475569;
             padding: 40px;
             border-radius: 8px;
-            max-width: 500px;
+            max-width: 450px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             display: flex;
             flex-direction: column;
@@ -140,17 +140,28 @@
             line-height: 1.5;
         }
 
-        .welcome-buttons {
+        .code-input-container {
             display: flex;
             flex-direction: column;
             gap: 10px;
             margin-top: 10px;
         }
 
-        .welcome-upload-btn {
+        .code-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 0.9rem;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: #fff;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .code-submit-btn {
             background: var(--airbus-orange);
             color: #000;
-            padding: 12px 24px;
+            padding: 10px 24px;
             font-weight: bold;
             font-size: 0.95rem;
             border: none;
@@ -159,24 +170,14 @@
             transition: filter 0.2s;
         }
 
-        .welcome-upload-btn:hover {
+        .code-submit-btn:hover {
             filter: brightness(1.1);
         }
 
-        .welcome-skip-btn {
-            background: transparent;
-            color: #cbd5e1;
-            border: 1px solid #475569;
-            padding: 10px 24px;
-            font-size: 0.85rem;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background 0.2s, color 0.2s;
-        }
-
-        .welcome-skip-btn:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: #fff;
+        #codeErrorMsg {
+            color: #f87171;
+            font-size: 0.8rem;
+            display: none;
         }
 
         .context-sidebar {
@@ -473,15 +474,15 @@
     </header>
 
     <div class="workspace">
-        <!-- BEGINSCHERM / WELKOMSTOVERLAY -->
+        <!-- BEGINSCHERM MET TOEGANGSCODE -->
         <div id="welcomeOverlay">
             <div class="welcome-card">
                 <h1>AeroNex <span>Kyran</span></h1>
-                <p>Welkom bij de ATA Manual Viewer. Upload direct je PDF-manuals of open de app om alle functies te bekijken.</p>
-                <div class="welcome-buttons">
-                    <!-- Deze knop activeert nu exact dezelfde file input functie als onderaan -->
-                    <button class="welcome-upload-btn" onclick="triggerUpload()">Upload Manuals</button>
-                    <button class="welcome-skip-btn" onclick="closeWelcomeOverlay()">Open App (Direct / Sla Over)</button>
+                <p>Voer de toegangscode in om de applicatie te ontgrendelen.</p>
+                <div class="code-input-container">
+                    <input type="password" id="accessCodeInput" class="code-input" placeholder="Voer code in..." onkeydown="if(event.key==='Enter') checkAccessCode()">
+                    <button class="code-submit-btn" onclick="checkAccessCode()">Ontgrendel</button>
+                    <div id="codeErrorMsg">Onjuiste code. Probeer het opnieuw.</div>
                 </div>
             </div>
         </div>
@@ -596,8 +597,12 @@
 
     <script>
         // ================================================================
-        // AeroNex - ROBUUSTE ATA PARSER + FULL TEXT SEARCH + WELKOMSTOVERLAY
+        // AeroNex - ROBUUSTE ATA PARSER + FULL TEXT SEARCH + TOEGANGSCODE
         // ================================================================
+        
+        // TOEGANGSCODE INGESTELD OP Vti2026:
+        const CORRECT_ACCESS_CODE = "Vti2026";
+
         let aircraftProfiles = [{ id: 1, name: 'Aircraft 1', books: [] }];
         let selectedAircraftIndex = 0;
         let loadedBooks = aircraftProfiles[0].books;
@@ -611,13 +616,17 @@
             return aircraftProfiles[selectedAircraftIndex];
         }
 
-        function closeWelcomeOverlay() {
-            document.getElementById('welcomeOverlay').style.display = 'none';
-        }
+        function checkAccessCode() {
+            const inputVal = document.getElementById('accessCodeInput').value;
+            const errorMsg = document.getElementById('codeErrorMsg');
 
-        // Functie zodat de knop in de overlay direct de file selector opent
-        function triggerUpload() {
-            document.getElementById('pdfUpload').click();
+            if (inputVal === CORRECT_ACCESS_CODE) {
+                document.getElementById('welcomeOverlay').style.display = 'none';
+            } else {
+                errorMsg.style.display = 'block';
+                document.getElementById('accessCodeInput').value = '';
+                document.getElementById('accessCodeInput').focus();
+            }
         }
 
         function refreshAircraftUI() {
@@ -971,8 +980,6 @@
                 }
             }
 
-            // Sluit het welkomstscherm zodra de PDFs zijn ingeladen
-            closeWelcomeOverlay();
             refreshAircraftUI();
             rebuildCurrentAircraftTree();
 
@@ -992,7 +999,7 @@
 
             const sortedChapters = Object.keys(chapters).sort();
             if (sortedChapters.length === 0) {
-                container.innerHTML = '<i>Nog geen boeken geladen. Gebruik hieronder de uploadknop of open de app.</i>';
+                container.innerHTML = '<i>Nog geen boeken geladen. Gebruik hieronder de uploadknop.</i>';
                 return;
             }
 
@@ -1134,7 +1141,7 @@
 
             currentAircraft.books.forEach((book, bIdx) => {
                 book.pages.forEach(p => {
-                    const textNorm = normalizeText(p.fullText);
+                    const textNorm = normalizeText(p.fullTest);
                     const subjNorm = normalizeText(p.subject);
                     const chapNorm = normalizeText(p.chapter);
                     const secNorm = normalizeText(p.sectionCode);
