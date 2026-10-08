@@ -162,16 +162,6 @@
             font-size: 0.65rem;
         }
 
-        .orange-btn {
-            background-color: var(--airbus-orange);
-            color: #000;
-            font-weight: bold;
-            text-align: center;
-            padding: 6px;
-            border-radius: 2px;
-            margin-bottom: 4px;
-        }
-
         .browse-sidebar {
             width: 460px;
             background-color: #ffffff;
@@ -450,70 +440,39 @@
                 </div>
             </div>
 
-<!-- TAB 3: TROUBLESHOOT -->
-<div id="tabTroubleshoot" class="tab-content">
-    <div style="font-weight:bold; margin-bottom:4px; color:#071930;">
-        TROUBLESHOOT
-    </div>
+            <!-- TAB 3: TROUBLESHOOT -->
+            <div id="tabTroubleshoot" class="tab-content">
+                <div style="font-weight:bold; margin-bottom:4px; color:#071930;">
+                    TROUBLESHOOT
+                </div>
 
-    <div style="color:#64748b; font-size:0.68rem; margin-bottom:8px;">
-        Zoek foutmeldingen, waarschuwingen of ATA-hoofdstukken in de geladen manuals.
-    </div>
+                <div style="color:#64748b; font-size:0.68rem; margin-bottom:8px;">
+                    Zoek foutmeldingen, waarschuwingen of ATA-hoofdstukken in de geladen manuals.
+                </div>
 
-    <div class="search-box-container">
-        <input
-            type="text"
-            id="troubleshootInput"
-            class="search-input"
-            placeholder="Bijv. HYD LOW PRESS of ATA 29"
-            onkeydown="if(event.key==='Enter') runTroubleshoot()"
-        >
-        <button class="search-btn" onclick="runTroubleshoot()">
-            Zoek
-        </button>
-    </div>
+                <div class="search-box-container">
+                    <input
+                        type="text"
+                        id="troubleshootInput"
+                        class="search-input"
+                        placeholder="Bijv. HYD LOW PRESS of ATA 29"
+                        onkeydown="if(event.key==='Enter') runTroubleshoot()"
+                    >
+                    <button class="search-btn" onclick="runTroubleshoot()">
+                        Zoek
+                    </button>
+                </div>
 
-    <div id="troubleshootResults" style="flex:1; overflow-y:auto;">
-        <i>Zoek een foutmelding of ATA-hoofdstuk.</i>
-    </div>
+                <div id="troubleshootResults" style="flex:1; overflow-y:auto;">
+                    <i>Zoek een foutmelding of ATA-hoofdstuk.</i>
+                </div>
 
-    <div style="color:#64748b; font-size:0.65rem; margin-top:10px;">
-        Resultaten zijn zoekmatches, geen automatisch goedgekeurde onderhoudsprocedures.
-        Controleer altijd de toepasselijke goedgekeurde manual.
-    </div>
-</div>
-<!-- TAB 3: TROUBLESHOOT -->
-<div id="tabTroubleshoot" class="tab-content">
-    <div style="font-weight:bold; margin-bottom:4px; color:#071930;">
-        TROUBLESHOOT
-    </div>
+                <div style="color:#64748b; font-size:0.65rem; margin-top:10px;">
+                    Resultaten zijn zoekmatches, geen automatisch goedgekeurde onderhoudsprocedures.
+                    Controleer altijd de toepasselijke goedgekeurde manual.
+                </div>
+            </div>
 
-    <div style="color:#64748b; font-size:0.68rem; margin-bottom:8px;">
-        Zoek foutmeldingen, waarschuwingen of ATA-hoofdstukken in de geladen manuals.
-    </div>
-
-    <div class="search-box-container">
-        <input
-            type="text"
-            id="troubleshootInput"
-            class="search-input"
-            placeholder="Bijv. HYD LOW PRESS of ATA 29"
-            onkeydown="if(event.key==='Enter') runTroubleshoot()"
-        >
-        <button class="search-btn" onclick="runTroubleshoot()">
-            Zoek
-        </button>
-    </div>
-
-    <div id="troubleshootResults" style="flex:1; overflow-y:auto;">
-        <i>Zoek een foutmelding of ATA-hoofdstuk.</i>
-    </div>
-
-    <div style="color:#64748b; font-size:0.65rem; margin-top:10px;">
-        Resultaten zijn zoekmatches, geen automatisch goedgekeurde onderhoudsprocedures.
-        Controleer altijd de toepasselijke goedgekeurde manual.
-    </div>
-</div>
             <div class="upload-section">
                 <label id="uploadLabel">Manuals voor Aircraft 1 (max. 4):</label>
                 <input type="file" id="pdfUpload" accept=".pdf" multiple onchange="processMultipleManuals(event)">
@@ -540,8 +499,6 @@
         // ================================================================
         // AeroNex - ROBUUSTE ATA PARSER + FULL TEXT SEARCH
         // ================================================================
-        // Elke aircraft heeft zijn eigen verzameling manuals.
-        // De PDF's worden niet gedeeld tussen aircraft-profielen.
         let aircraftProfiles = [{ id: 1, name: 'Aircraft 1', books: [] }];
         let selectedAircraftIndex = 0;
         let loadedBooks = aircraftProfiles[0].books;
@@ -637,9 +594,12 @@
 
             if (tabName === 'browse') {
                 document.getElementById('tabBrowse').classList.add('active');
-            } else {
+            } else if (tabName === 'search') {
                 document.getElementById('tabSearch').classList.add('active');
                 setTimeout(() => document.getElementById('globalSearchInput').focus(), 0);
+            } else if (tabName === 'troubleshoot') {
+                document.getElementById('tabTroubleshoot').classList.add('active');
+                setTimeout(() => document.getElementById('troubleshootInput').focus(), 0);
             }
         }
 
@@ -658,8 +618,6 @@
             }
         });
 
-        // Normaliseert PDF-tekst zodat bv. "32 - 10 - 40" en "32-10-40"
-        // als hetzelfde ATA-nummer en dezelfde zoekterm worden behandeld.
         function normalizeText(value) {
             return String(value || '')
                 .normalize('NFKC')
@@ -681,8 +639,6 @@
             }[ch]));
         }
 
-        // ATA chapter-namen voor de boomstructuur.
-        // De naam wordt naast het chapter-nummer getoond.
         const ATA_CHAPTER_NAMES = {
             '20': 'Standard Practices — Airframe',
             '21': 'Air Conditioning',
@@ -744,16 +700,7 @@
             return ATA_CHAPTER_NAMES[String(chapter).padStart(2, '0')] || 'Chapter';
         }
 
-        // Haalt ATA-codes uit de echte PDF-items. Dit werkt ook wanneer de PDF
-        // spaties rond de streepjes zet of "ATA 32" afzonderlijk rendert.
         function extractAtaInfo(items) {
-            // BELANGRIJK:
-            // De ATA Chapter is ALTIJD het EERSTE getal van de ATA-code
-            // die onderaan de manualpagina staat.
-            // Voorbeeld: 21-32-00 -> ATA CHAPTER 21, NIET 32.
-            // PDF.js gebruikt een Y-coordinaat vanaf de onderkant van de pagina,
-            // dus een LAGERE y betekent dat de tekst lager op de pagina staat.
-
             const candidates = [];
             const allItems = items || [];
 
@@ -762,11 +709,6 @@
                 const text = normalizeText(raw);
                 if (!text) continue;
 
-                // Volledige ATA-codes: 21-32-00, 19-20-22-22, 32-10-40, enz.
-                // BELANGRIJK: elk ATA-deel bestaat uit 2 cijfers. Hierdoor wordt
-                // een footer zoals 57-20-1 (manual/page reference) NIET als ATA-code
-                // gezien. Het eerste 2-cijferige deel is altijd het ATA Chapter.
-                // Voorbeeld: 19-20-22-22 -> Chapter 19.
                 const codeRegex = /(?:^|[^0-9])(\d{2}(?:\s*-\s*\d{2}){1,3})(?=$|[^0-9])/g;
                 let match;
                 while ((match = codeRegex.exec(text)) !== null) {
@@ -777,12 +719,10 @@
                         chapter: parts[0],
                         y: Number(item.y) || 0,
                         x: Number(item.x) || 0,
-                        // Onderaan is belangrijker dan de lengte van de code.
                         priority: 100
                     });
                 }
 
-                // Ook losse schrijfwijze zoals "ATA 21".
                 const ataRegex = /\bata\s*(\d{2})\b/gi;
                 while ((match = ataRegex.exec(text)) !== null) {
                     candidates.push({
@@ -799,12 +739,7 @@
                 return { chapter: '00', sectionCode: '00-00' };
             }
 
-            // Kies primair de code die het LAAGST op de pagina staat.
-            // Dit voorkomt exact het probleem waarbij 21-32-00 fout als Chapter 32
-            // werd ingedeeld. Bij gelijke hoogte kiezen we de langste/echtste code.
             candidates.sort((a, b) => {
-                // Eerst de laagste tekst op de pagina, daarna voorkeur voor
-                // echte 2-cijferige ATA-codes boven mogelijke 1-cijferige codes.
                 const aDigits = a.chapter.length === 2 ? 1 : 0;
                 const bDigits = b.chapter.length === 2 ? 1 : 0;
                 return a.y - b.y ||
@@ -827,17 +762,6 @@
             return match ? `p.${match[1]}` : `p.${pageIndex}`;
         }
 
-        // Probeer de ECHT onderstreepte titel uit de PDF te halen.
-        // PDF.js geeft onderstrepingen meestal niet als tekst mee: het is
-        // vaak een aparte lijn/rectangle in de tekenoperatoren. Daarom zoeken
-        // we eerst naar horizontale lijnen en koppelen die aan tekst erboven.
-        // Snelle titelherkenning.
-        // BELANGRIJK: we gebruiken hier GEEN getOperatorList() meer tijdens
-        // het inlezen van iedere pagina. Dat kan bij grote manuals extreem
-        // traag worden en ervoor zorgen dat de browser lijkt vast te hangen.
-        // We zoeken de echte hoofdstuktitel uit de tekstlaag: meestal is dit
-        // een korte, volledig/overwegend hoofdlettertekst die als kop in de PDF
-        // staat (zoals "REAR COMPARTMENT DOOR").
         function findUnderlinedSubject(pdfPage, items) {
             const source = (items || []).map((item, index) => {
                 const raw = String(item.str || '').trim().replace(/\s+/g, ' ');
@@ -867,7 +791,6 @@
                 else if (item.uppercaseRatio >= 0.75) score += 35;
                 if (headingWords.test(item.raw)) score += 55;
                 if (item.raw.length >= 8 && item.raw.length <= 60) score += 15;
-                // Koppen staan in veel manuals hoger op de pagina dan de footer.
                 if (item.y > 100) score += 5;
                 return { ...item, score };
             });
@@ -877,523 +800,14 @@
         }
 
         function findSubject(pdfPage, items, fullText, sectionCode) {
-            // 1. Eerst: exact de tekst die door een underline wordt aangeduid.
             const underlined = findUnderlinedSubject(pdfPage, items);
             if (underlined) {
                 return underlined
                     .toLowerCase()
-                    .replace(/\b\w/g, c => c.toUpperCase())
-                    .replace(/\s+/g, ' ')
-                    .trim()
-                    .substring(0, 100);
+                    .replace(/\b\w/g, c => c.toUpperCase());
             }
-
-            // 2. Fallback voor PDF's die hun underline niet als lijn exporteren.
-            const codeRegex = /^\d{2}(?:\s*-\s*\d{2}){1,3}$/;
-            const generic = /^(maintenance\s+manual|maintenance|manual|page\s*\d+|chapter\s*\d+|dassault|airbus|copyright|effectivity|table\s+of\s+contents|contents|blank\s+page|general|description|operation|procedure|inspection|check|test)$/i;
-            const bad = /^(?:page|ata|mod|issue|revision|rev|date|sheet|figure|drawing)\b/i;
-
-            const source = (items || []).map((item, index) => {
-                const raw = String(item.str || '').trim().replace(/\s+/g, ' ');
-                const letters = raw.replace(/[^A-Za-z]/g, '');
-                const upperLetters = letters.replace(/[^A-Z]/g, '');
-                return {
-                    raw,
-                    x: Number(item.x) || 0,
-                    y: Number(item.y) || 0,
-                    index,
-                    uppercaseRatio: letters.length ? upperLetters.length / letters.length : 0
-                };
-            }).filter(item => {
-                if (item.raw.length < 4 || item.raw.length > 100) return false;
-                if (bad.test(item.raw) || generic.test(item.raw)) return false;
-                if (codeRegex.test(normalizeText(item.raw))) return false;
-                if (/^\d+$/.test(item.raw)) return false;
-                return true;
-            });
-
-            const specificWords = /\b(rear|front|forward|aft|compartment|access|service|crew|passenger|cargo|emergency|nose|main|center|centre|left|right|upper|lower|hinge|latch|lock|rod|bolt|panel|fairing|wheel|brake|tyre|tire|actuator|valve|pump|reservoir|generator|starter|battery|inverter|computer|sensor|probe|antenna|light|lamp|window|windshield|windscreen|door|doors|landing|gear|flap|slat|spoiler|rudder|elevator|aileron|engine|pylon|nacelle|fuel|tank|oxygen|mask|bottle|hydraulic|electrical|pneumatic|air\s+conditioning|communication|navigation)\b/i;
-            const scored = source.map(item => {
-                let score = 0;
-                if (item.uppercaseRatio >= 0.85 && item.raw.length >= 5) score += 45;
-                if (specificWords.test(item.raw)) score += 55;
-                if (/\b(rear|front|forward|aft|compartment|access|service|passenger|crew|cargo)\b/i.test(item.raw)) score += 35;
-                if (/\b(door|doors|wheel|brake|fuel|tank|panel|valve|pump|actuator|hinge|latch|lock)\b/i.test(item.raw)) score += 25;
-                if (/^[A-Z0-9][A-Z0-9 .\/-]+$/.test(item.raw) && item.raw.length <= 70) score += 20;
-                if (item.y > 0) score += 5;
-                return { ...item, score };
-            });
-            scored.sort((a,b) => b.score - a.score || b.y - a.y || a.index - b.index);
-            const best = scored[0];
-            if (!best || best.score < 35) return `Pagina ${sectionCode}`;
-            return best.raw.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()).trim().substring(0,100);
+            return 'General Information';
         }
-
-        async function processMultipleManuals(event) {
-            let files = Array.from(event.target.files || []);
-            event.target.value = '';
-            if (!files.length) return;
-
-            const aircraft = getCurrentAircraft();
-            const availableSlots = 4 - aircraft.books.length;
-            if (availableSlots <= 0) {
-                alert(`${aircraft.name} heeft al 4 manuals geladen. Voeg een nieuw vliegtuig toe of kies een ander vliegtuig.`);
-                return;
-            }
-
-            if (files.length > availableSlots) {
-                alert(`Je kunt voor ${aircraft.name} nog ${availableSlots} manual(s) toevoegen. De eerste ${availableSlots} worden ingeladen.`);
-                files = files.slice(0, availableSlots);
-            }
-
-            loadedBooks = aircraft.books;
-            currentBookIndex = 0;
-            activePageNum = 1;
-
-            const treeContainer = document.getElementById('treeContainer');
-            treeContainer.innerHTML = `<div style="padding:10px; color:#071930;">Bezig met inlezen van ${files.length} manual(s) voor <b>${escapeHtml(aircraft.name)}</b>...</div>`;
-
-            for (let bIdx = 0; bIdx < files.length; bIdx++) {
-                const file = files[bIdx];
-                const reader = new FileReader();
-                const fileBuffer = await new Promise((resolve, reject) => {
-                    reader.onload = () => resolve(reader.result);
-                    reader.onerror = () => reject(reader.error);
-                    reader.readAsArrayBuffer(file);
-                });
-
-                const pdfDoc = await pdfjsLib.getDocument({ data: new Uint8Array(fileBuffer) }).promise;
-                const bookPagesData = [];
-                const globalBookIndex = aircraft.books.length;
-
-                for (let i = 1; i <= pdfDoc.numPages; i++) {
-                    const progress = Math.round((i / pdfDoc.numPages) * 100);
-                    treeContainer.innerHTML = `<div style="padding:10px; color:#071930;">${escapeHtml(aircraft.name)}<br>Manual ${bIdx + 1}/${files.length}: ${escapeHtml(file.name)}<br>Pagina ${i}/${pdfDoc.numPages} (${progress}%)</div>`;
-                    if (i % 5 === 0) await new Promise(r => setTimeout(r, 0));
-
-                    const page = await pdfDoc.getPage(i);
-                    const textContent = await page.getTextContent({ normalizeWhitespace: false });
-                    const itemsWithPos = textContent.items.map(item => ({
-                        str: item.str || '',
-                        x: item.transform ? item.transform[4] : 0,
-                        y: item.transform ? item.transform[5] : 0
-                    }));
-
-                    const fullText = itemsWithPos
-                        .slice()
-                        .sort((a, b) => b.y - a.y || a.x - b.x)
-                        .map(item => item.str)
-                        .join(' ')
-                        .replace(/\s+/g, ' ')
-                        .trim();
-
-                    const ata = extractAtaInfo(itemsWithPos);
-                    const chapterKey = String(parseInt(ata.chapter, 10) || 0);
-                    const displayPageLabel = getPageLabel(fullText, i);
-                    const foundSubject = findSubject(page, itemsWithPos, fullText, ata.sectionCode);
-                    const normalizedFullText = normalizeText(fullText);
-                    const searchTextCompact = normalizedFullText.replace(/[^a-z0-9]+/g, '');
-
-                    const pageObj = {
-                        bookIndex: globalBookIndex,
-                        bookName: file.name,
-                        pageIndex: i,
-                        label: displayPageLabel,
-                        subject: foundSubject,
-                        sectionCode: ata.sectionCode,
-                        chapter: chapterKey,
-                        chapterName: getAtaChapterName(chapterKey),
-                        fullTextContent: normalizedFullText,
-                        searchTextCompact,
-                        rawText: fullText
-                    };
-
-                    bookPagesData.push(pageObj);
-                }
-
-                aircraft.books.push({
-                    name: file.name,
-                    doc: pdfDoc,
-                    pages: bookPagesData
-                });
-            }
-
-            loadedBooks = aircraft.books;
-            document.getElementById('loadedBooksCount').innerText = `${loadedBooks.length} / 4 boeken geladen`;
-            document.getElementById('viewerToolbar').style.display = 'flex';
-            document.getElementById('headerInfoText').innerText = `${aircraft.name.toUpperCase()} — ${loadedBooks.map(b => b.name).join(', ')}`;
-
-            rebuildCurrentAircraftTree();
-            renderSelectedPage(currentBookIndex, activePageNum);
-            document.getElementById('viewerStatus').innerText = `${aircraft.name}: manuals succesvol geladen!`;
-            refreshAircraftUI();
-        }
-
-        function buildTreeUI(globalChapters) {
-            const treeContainer = document.getElementById('treeContainer');
-            treeContainer.innerHTML = '';
-
-            const sortedChapters = Object.keys(globalChapters)
-                .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
-
-            sortedChapters.forEach(ch => {
-                const pagesList = globalChapters[ch];
-                if (!pagesList.length) return;
-
-                // Groepeer pagina's met EXACT dezelfde ATA-code.
-                // Bijvoorbeeld:
-                // 21-32-00 + 21-32-00 + 21-32-00 => één item
-                // 21-32-00 + 21-32-01 => twee aparte items
-                const sectionGroups = {};
-
-                pagesList.forEach(page => {
-                    const key = normalizeSectionCode(page.sectionCode);
-                    if (!sectionGroups[key]) sectionGroups[key] = [];
-                    sectionGroups[key].push(page);
-                });
-
-                const sortedSections = Object.keys(sectionGroups).sort((a, b) =>
-                    a.localeCompare(b, undefined, { numeric: true })
-                );
-
-                const chapterFolderNode = document.createElement('div');
-                chapterFolderNode.className = 'tree-node';
-
-                let childrenHtml = '';
-
-                sortedSections.forEach(sectionCode => {
-                    const group = sectionGroups[sectionCode];
-
-                    // Binnen één ATA-code sorteren we de PDF-pagina's.
-                    group.sort((a, b) =>
-                        a.bookName.localeCompare(b.bookName) ||
-                        a.pageIndex - b.pageIndex
-                    );
-
-                    const first = group[0];
-                    const pageLabels = group.map(p => escapeHtml(p.label)).join(', ');
-                    const books = [...new Set(group.map(p => p.bookName))]
-                        .map(name => escapeHtml(name))
-                        .join(', ');
-
-                    // Als dezelfde ATA-code meerdere keren voorkomt, tonen we
-                    // één rij met alle pagina's. Klikken opent de eerste pagina.
-                    const countText = group.length > 1
-                        ? ` (${group.length} pagina's)`
-                        : '';
-
-                    childrenHtml += `
-                        <li class="tree-leaf"
-                            onclick="jumpToBookPage(${first.bookIndex}, ${first.pageIndex})"
-                            title="${escapeHtml(sectionCode)} — ${escapeHtml(first.subject)}">
-                            <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
-                                <div style="display:flex; align-items:center; gap:6px; overflow:hidden;">
-                                    <span style="font-weight:bold; color:#071930; font-size:0.72rem; white-space:nowrap;">
-                                        ${escapeHtml(sectionCode)}
-                                    </span>
-                                    <span style="color:#64748b; font-size:0.7rem;">—</span>
-                                    <span style="font-weight:600; color:#1e293b; font-size:0.7rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                        ${escapeHtml(first.subject)}${countText}
-                                    </span>
-                                </div>
-                                <span style="font-size:0.63rem; color:#0284c7; background:#e0f2fe; padding:1px 4px; border-radius:2px; font-weight:bold; white-space:nowrap;">
-                                    [${pageLabels}]
-                                </span>
-                            </div>
-                            <div style="font-size:0.58rem; color:#64748b; margin-top:2px;">
-                                📖 ${books}
-                            </div>
-                        </li>`;
-                });
-
-                chapterFolderNode.innerHTML = `
-                    <div class="tree-toggle" onclick="toggleNode(this)">
-                        <span class="toggle-symbol">></span>
-                        📁 CHAPTER - ${escapeHtml(ch.padStart(2, '0'))}
-                        <span style="font-weight:600; color:#475569; margin-left:4px;">— ${escapeHtml(getAtaChapterName(ch))}</span>
-                        <span style="margin-left:auto; color:#64748b; font-size:0.68rem;">(${sortedSections.length})</span>
-                    </div>
-                    <ul class="tree-children">${childrenHtml}</ul>`;
-
-                treeContainer.appendChild(chapterFolderNode);
-            });
-
-            if (!sortedChapters.length) {
-                treeContainer.innerHTML = '<i>Geen ATA-hoofdstukken gevonden in de geladen manuals.</i>';
-            }
-        }
-
-        function normalizeSectionCode(code) {
-            return String(code || '')
-                .trim()
-                .replace(/\s+/g, '')
-                .replace(/-+/g, '-');
-        }
-
-        function queryMatchesPage(page, query) {
-            const q = normalizeText(query);
-            if (!q) return false;
-
-            const section = normalizeText(page.sectionCode);
-            const subject = normalizeText(page.subject);
-            const text = normalizeText(page.fullTextContent);
-            const book = normalizeText(page.bookName);
-
-            // Normale zoekactie.
-            if (section.includes(q) || subject.includes(q) || text.includes(q) ||
-                page.label.toLowerCase().includes(q) || book.includes(q)) {
-                return true;
-            }
-
-            // ATA-codes met/zonder streepjes en spaties.
-            const compactQuery = q.replace(/[^a-z0-9]+/g, '');
-            const compactFields = [section, subject, text, book]
-                .map(v => v.replace(/[^a-z0-9]+/g, ''));
-            if (compactQuery.length >= 2 && compactFields.some(v => v.includes(compactQuery))) {
-                return true;
-            }
-
-            // Zoek ook op meerdere woorden: "nose wheel steering" vindt een pagina
-            // wanneer de woorden verspreid in de PDF-tekst staan.
-            const words = q.split(/\s+/).filter(Boolean);
-            if (words.length > 1) {
-                return words.every(word => {
-                    const compactWord = word.replace(/[^a-z0-9]+/g, '');
-                    return [section, subject, text, book].some(field =>
-                        field.includes(word) ||
-                        (compactWord.length >= 2 && field.replace(/[^a-z0-9]+/g, '').includes(compactWord))
-                    );
-                });
-            }
-
-            return false;
-        }
-
-        function getSearchSnippet(page, query) {
-            const q = normalizeText(query);
-            const text = page.rawText || page.fullTextContent || '';
-            const lower = normalizeText(text);
-            let index = lower.indexOf(q);
-
-            // Zoek ook compact wanneer de PDF bijvoorbeeld "21 - 32 - 00" bevat.
-            if (index < 0) {
-                const compactQ = q.replace(/[^a-z0-9]+/g, '');
-                const compactText = lower.replace(/[^a-z0-9]+/g, '');
-                const compactIndex = compactText.indexOf(compactQ);
-                if (compactIndex >= 0) {
-                    index = Math.max(0, Math.min(text.length - 1, compactIndex));
-                }
-            }
-
-            if (index < 0) return text.substring(0, 220);
-            const start = Math.max(0, index - 80);
-            const end = Math.min(text.length, index + q.length + 120);
-            return `${start > 0 ? '…' : ''}${text.substring(start, end)}${end < text.length ? '…' : ''}`;
-        }
-
-        function executeGlobalSearch() {
-            const rawQuery = document.getElementById('globalSearchInput').value;
-            const query = normalizeText(rawQuery);
-            const resultsContainer = document.getElementById('searchResultsContainer');
-            resultsContainer.innerHTML = '';
-
-            if (!query) {
-                resultsContainer.innerHTML = '<i>Voer een zoekterm in.</i>';
-                return;
-            }
-
-            const totalMatches = [];
-            loadedBooks.forEach(book => {
-                book.pages.forEach(page => {
-                    if (queryMatchesPage(page, query)) totalMatches.push(page);
-                });
-            });
-
-            // Relevantie: exacte sectie eerst, daarna onderwerp, daarna tekst.
-            totalMatches.sort((a, b) => {
-                const score = page => {
-                    let s = 0;
-                    if (normalizeText(page.sectionCode) === query) s += 100;
-                    if (normalizeText(page.subject).includes(query)) s += 50;
-                    if (normalizeText(page.fullTextContent).includes(query)) s += 10;
-                    if (normalizeText(page.bookName).includes(query)) s += 5;
-                    return s;
-                };
-                return score(b) - score(a) || a.bookIndex - b.bookIndex || a.pageIndex - b.pageIndex;
-            });
-
-            if (!totalMatches.length) {
-                resultsContainer.innerHTML = `<div style="padding:10px; color:#dc2626;">Geen resultaten gevonden voor "${escapeHtml(rawQuery)}".</div>`;
-                return;
-            }
-
-            let htmlResults = `<div style="font-size:0.7rem; color:#64748b; margin-bottom:6px;">${totalMatches.length} resultaten gevonden:</div>`;
-
-            totalMatches.forEach(m => {
-                const snippet = getSearchSnippet(m, query);
-                htmlResults += `
-                    <div class="search-result-item" onclick="jumpToBookPage(${m.bookIndex}, ${m.pageIndex})">
-                        <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
-                            <div style="display:flex; align-items:center; gap:6px; overflow:hidden;">
-                                <span style="font-weight:bold; color:#071930; font-size:0.72rem;">${escapeHtml(m.sectionCode)}</span>
-                                <span style="color:#64748b; font-size:0.7rem;">—</span>
-                                <span style="font-weight:600; color:#1e293b; font-size:0.72rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(m.subject)}</span>
-                            </div>
-                            <span style="font-size:0.63rem; color:#0284c7; background:#e0f2fe; padding:1px 4px; border-radius:2px; font-weight:bold;">[${escapeHtml(m.label)}]</span>
-                        </div>
-                        <div style="font-size:0.6rem; color:#64748b; margin-top:2px;">📖 Boek: ${escapeHtml(m.bookName)}</div>
-                        <div style="font-size:0.61rem; color:#475569; margin-top:4px; line-height:1.35;">${escapeHtml(snippet)}</div>
-                    </div>`;
-            });
-
-            resultsContainer.innerHTML = htmlResults;
-        }
-
-function runTroubleshoot() {
-    const input = document.getElementById('troubleshootInput');
-    const results = document.getElementById('troubleshootResults');
-    const rawQuery = input.value.trim();
-    const query = normalizeText(rawQuery);
-
-    results.innerHTML = '';
-
-    if (query.length < 2) {
-        results.textContent = 'Typ minstens 2 tekens.';
-        return;
-    }
-
-    if (!loadedBooks.length) {
-        results.textContent =
-            'Laad eerst een PDF via de uploadknop om te kunnen zoeken.';
-        return;
-    }
-
-    const ataMatch = query.match(/\bata\s*(\d{2})\b/i);
-    const chapterMatch = query.match(/^\d{2}$/);
-    const requestedChapter = ataMatch
-        ? ataMatch[1]
-        : chapterMatch
-            ? query
-            : null;
-
-    const matches = [];
-
-    loadedBooks.forEach((book, bookIndex) => {
-        book.pages.forEach(page => {
-            const chapterMatches = requestedChapter &&
-                String(page.chapter).padStart(2, '0') === requestedChapter;
-
-            const textMatches = !requestedChapter &&
-                queryMatchesPage(page, query);
-
-            if (chapterMatches || textMatches) {
-                matches.push({
-                    ...page,
-                    bookIndex
-                });
-            }
-        });
-    });
-
-    if (!matches.length) {
-        results.textContent =
-            `Geen resultaten gevonden voor "${rawQuery}".`;
-        return;
-    }
-
-    const heading = document.createElement('div');
-    heading.style.marginBottom = '8px';
-    heading.style.color = '#64748b';
-    heading.textContent =
-        `${matches.length} zoekresultaat/resultaten in de geladen manuals`;
-    results.appendChild(heading);
-
-    matches.slice(0, 100).forEach(page => {
-        const item = document.createElement('div');
-        item.className = 'search-result-item';
-
-        const title = document.createElement('strong');
-        title.textContent =
-            `${page.sectionCode || 'ATA onbekend'} — ${page.subject || 'Pagina'}`;
-
-        const details = document.createElement('div');
-        details.style.marginTop = '4px';
-        details.style.color = '#0284c7';
-        details.textContent =
-            `${page.bookName} | PDF-pagina ${page.pageIndex}`;
-
-        const snippet = document.createElement('div');
-        snippet.style.marginTop = '5px';
-        snippet.style.color = '#475569';
-        snippet.textContent = getSearchSnippet(page, rawQuery);
-
-        item.append(title, details, snippet);
-        item.addEventListener('click', () => {
-            jumpToBookPage(page.bookIndex, page.pageIndex);
-        });
-
-        results.appendChild(item);
-    });
-
-    if (matches.length > 100) {
-        const note = document.createElement('p');
-        note.style.marginTop = '8px';
-        note.textContent =
-            'De eerste 100 resultaten worden getoond.';
-        results.appendChild(note);
-    }
-}
-        function jumpToBookPage(bIdx, pageNum) {
-            if (!loadedBooks[bIdx]) return;
-            currentBookIndex = bIdx;
-            activePageNum = pageNum;
-            renderSelectedPage(currentBookIndex, activePageNum);
-        }
-
-        async function renderSelectedPage(bIdx, num) {
-            const book = loadedBooks[bIdx];
-            if (!book || num < 1 || num > book.doc.numPages) return;
-
-            const page = await book.doc.getPage(num);
-            const viewport = page.getViewport({ scale: renderScale });
-            const outputScale = window.devicePixelRatio || 1;
-
-            canvasElement.width = Math.floor(viewport.width * outputScale);
-            canvasElement.height = Math.floor(viewport.height * outputScale);
-            canvasElement.style.width = Math.floor(viewport.width) + 'px';
-            canvasElement.style.height = Math.floor(viewport.height) + 'px';
-
-            const transform = outputScale !== 1
-                ? [outputScale, 0, 0, outputScale, 0, 0]
-                : null;
-
-            await page.render({
-                canvasContext,
-                viewport,
-                transform
-            }).promise;
-
-            document.getElementById('pageIndicator').innerText = `[${book.name}] Pagina ${num} / ${book.doc.numPages}`;
-            document.getElementById('viewerStatus').innerText = `Actief boek: ${book.name}`;
-        }
-
-        function prevPage() {
-            if (!loadedBooks.length || activePageNum <= 1) return;
-            activePageNum--;
-            renderSelectedPage(currentBookIndex, activePageNum);
-        }
-
-        function nextPage() {
-            if (!loadedBooks.length) return;
-            const book = loadedBooks[currentBookIndex];
-            if (!book || activePageNum >= book.doc.numPages) return;
-            activePageNum++;
-            renderSelectedPage(currentBookIndex, activePageNum);
-        }
-        // Start met één leeg vliegtuigprofiel.
-        refreshAircraftUI();
-        rebuildCurrentAircraftTree();
-
     </script>
 </body>
 </html>
