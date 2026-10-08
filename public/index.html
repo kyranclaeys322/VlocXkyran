@@ -421,6 +421,7 @@
             <div class="browse-tabs">
                 <div class="b-tab active" onclick="switchTab('browse', this)">📁 Browse</div>
                 <div class="b-tab" onclick="switchTab('search', this)">🔍 Search (Ctrl+F)</div>
+                <div class="b-tab" onclick="switchTab('troubleshoot', this)">🛠️ Troubleshoot</div>
             </div>
 
             <!-- TAB 1: BROWSE & BOOMSTRUCTUUR -->
@@ -449,6 +450,70 @@
                 </div>
             </div>
 
+<!-- TAB 3: TROUBLESHOOT -->
+<div id="tabTroubleshoot" class="tab-content">
+    <div style="font-weight:bold; margin-bottom:4px; color:#071930;">
+        TROUBLESHOOT
+    </div>
+
+    <div style="color:#64748b; font-size:0.68rem; margin-bottom:8px;">
+        Zoek foutmeldingen, waarschuwingen of ATA-hoofdstukken in de geladen manuals.
+    </div>
+
+    <div class="search-box-container">
+        <input
+            type="text"
+            id="troubleshootInput"
+            class="search-input"
+            placeholder="Bijv. HYD LOW PRESS of ATA 29"
+            onkeydown="if(event.key==='Enter') runTroubleshoot()"
+        >
+        <button class="search-btn" onclick="runTroubleshoot()">
+            Zoek
+        </button>
+    </div>
+
+    <div id="troubleshootResults" style="flex:1; overflow-y:auto;">
+        <i>Zoek een foutmelding of ATA-hoofdstuk.</i>
+    </div>
+
+    <div style="color:#64748b; font-size:0.65rem; margin-top:10px;">
+        Resultaten zijn zoekmatches, geen automatisch goedgekeurde onderhoudsprocedures.
+        Controleer altijd de toepasselijke goedgekeurde manual.
+    </div>
+</div>
+<!-- TAB 3: TROUBLESHOOT -->
+<div id="tabTroubleshoot" class="tab-content">
+    <div style="font-weight:bold; margin-bottom:4px; color:#071930;">
+        TROUBLESHOOT
+    </div>
+
+    <div style="color:#64748b; font-size:0.68rem; margin-bottom:8px;">
+        Zoek foutmeldingen, waarschuwingen of ATA-hoofdstukken in de geladen manuals.
+    </div>
+
+    <div class="search-box-container">
+        <input
+            type="text"
+            id="troubleshootInput"
+            class="search-input"
+            placeholder="Bijv. HYD LOW PRESS of ATA 29"
+            onkeydown="if(event.key==='Enter') runTroubleshoot()"
+        >
+        <button class="search-btn" onclick="runTroubleshoot()">
+            Zoek
+        </button>
+    </div>
+
+    <div id="troubleshootResults" style="flex:1; overflow-y:auto;">
+        <i>Zoek een foutmelding of ATA-hoofdstuk.</i>
+    </div>
+
+    <div style="color:#64748b; font-size:0.65rem; margin-top:10px;">
+        Resultaten zijn zoekmatches, geen automatisch goedgekeurde onderhoudsprocedures.
+        Controleer altijd de toepasselijke goedgekeurde manual.
+    </div>
+</div>
             <div class="upload-section">
                 <label id="uploadLabel">Manuals voor Aircraft 1 (max. 4):</label>
                 <input type="file" id="pdfUpload" accept=".pdf" multiple onchange="processMultipleManuals(event)">
