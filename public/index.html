@@ -119,11 +119,14 @@
             border-radius: 8px;
             max-width: 500px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
 
         .welcome-card h1 {
             font-size: 1.8rem;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             color: #fff;
         }
 
@@ -134,8 +137,14 @@
         .welcome-card p {
             font-size: 0.9rem;
             color: #94a3b8;
-            margin-bottom: 25px;
             line-height: 1.5;
+        }
+
+        .welcome-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
         }
 
         .welcome-upload-btn {
@@ -152,6 +161,22 @@
 
         .welcome-upload-btn:hover {
             filter: brightness(1.1);
+        }
+
+        .welcome-skip-btn {
+            background: transparent;
+            color: #cbd5e1;
+            border: 1px solid #475569;
+            padding: 10px 24px;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .welcome-skip-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
         }
 
         .context-sidebar {
@@ -452,8 +477,11 @@
         <div id="welcomeOverlay">
             <div class="welcome-card">
                 <h1>AeroNex <span>Kyran</span></h1>
-                <p>Welkom bij de ATA Manual Viewer. Om te beginnen selecteer je een vliegtuig en voeg je één of meerdere PDF-manuals toe.</p>
-                <button class="welcome-upload-btn" onclick="document.getElementById('pdfUpload').click()">Upload Manuals</button>
+                <p>Welkom bij de ATA Manual Viewer. Upload een PDF-manual of open de applicatie direct om alle functies te bekijken.</p>
+                <div class="welcome-buttons">
+                    <button class="welcome-upload-btn" onclick="document.getElementById('pdfUpload').click()">Upload Manuals</button>
+                    <button class="welcome-skip-btn" onclick="closeWelcomeOverlay()">Open App (Direct / Sla Over)</button>
+                </div>
             </div>
         </div>
 
@@ -582,6 +610,10 @@
             return aircraftProfiles[selectedAircraftIndex];
         }
 
+        function closeWelcomeOverlay() {
+            document.getElementById('welcomeOverlay').style.display = 'none';
+        }
+
         function refreshAircraftUI() {
             const select = document.getElementById('aircraftSelect');
             const current = getCurrentAircraft();
@@ -595,14 +627,6 @@
             document.getElementById('headerInfoText').innerText = current.books.length
                 ? `${current.name.toUpperCase()} — ${current.books.map(b => b.name).join(', ')}`
                 : `${current.name.toUpperCase()} — GEEN MANUALS GELADEN`;
-
-            // Verberg het beginscherm zodra er boeken zijn
-            const welcomeOverlay = document.getElementById('welcomeOverlay');
-            if (current.books.length > 0) {
-                welcomeOverlay.style.display = 'none';
-            } else {
-                welcomeOverlay.style.display = 'flex';
-            }
         }
 
         function addAircraft() {
@@ -941,6 +965,7 @@
                 }
             }
 
+            closeWelcomeOverlay();
             refreshAircraftUI();
             rebuildCurrentAircraftTree();
 
@@ -960,7 +985,7 @@
 
             const sortedChapters = Object.keys(chapters).sort();
             if (sortedChapters.length === 0) {
-                container.innerHTML = '<i>Nog geen boeken geladen. Gebruik hieronder de uploadknop.</i>';
+                container.innerHTML = '<i>Nog geen boeken geladen. Gebruik hieronder de uploadknop of open de app.</i>';
                 return;
             }
 
@@ -980,7 +1005,6 @@
                 const childrenUl = document.createElement('ul');
                 childrenUl.className = 'tree-children';
 
-                // Groepeer per sectionCode
                 const sections = {};
                 pages.forEach(p => {
                     if (!sections[p.sectionCode]) sections[p.sectionCode] = [];
