@@ -100,7 +100,7 @@
             position: relative;
         }
 
-        /* BEGINSCHERM / WELKOMSTOVERLAY MET CODE */
+        /* BEGINSCHERM MET TOEGANGSCODE */
         #welcomeOverlay {
             position: absolute;
             top: 0;
@@ -978,7 +978,7 @@
             return ATA_CHAPTER_NAMES[String(chapter).padStart(2, '0')] || 'Chapter';
         }
 
-        // VERBETERDE ATA PARSER: Detecteert nauwkeuriger coderingen zoals XX-XX-XX of expliciete ATA-vermeldingen
+        // NAUWKEURIGE ATA PARSER OP BASIS VAN HET EERSTE GETAL (bijv. "21" uit "21-32-50")
         function extractAtaInfo(items) {
             const candidates = [];
             const allItems = items || [];
@@ -988,22 +988,24 @@
                 const text = normalizeText(raw);
                 if (!text) continue;
 
-                // Match patronen zoals 29-10-00, 32-10, etc.
+                // Match patronen zoals 21-32-50 of 21-32
                 const codeRegex = /(?:^|[^0-9])(\d{2}(?:\s*-\s*\d{2}){1,3})(?=$|[^0-9])/g;
                 let match;
                 while ((match = codeRegex.exec(text)) !== null) {
                     const code = match[1].replace(/\s+/g, '');
                     const parts = code.split('-');
+                    const chapter = parts[0]; // Het EERSTE getal is het ATA-hoofdstuk
+                    
                     candidates.push({
-                        code,
-                        chapter: parts[0],
+                        code: code,
+                        chapter: chapter,
                         y: Number(item.y) || 0,
                         x: Number(item.x) || 0,
-                        priority: 120
+                        priority: 150
                     });
                 }
 
-                // Match patronen zoals "ata 29" of "chapter 32"
+                // Match patronen zoals "ata 21" of "chapter 21"
                 const ataRegex = /\b(?:ata|chapter)\s*(\d{2})\b/gi;
                 while ((match = ataRegex.exec(text)) !== null) {
                     const ch = match[1];
@@ -1015,28 +1017,13 @@
                         priority: 100
                     });
                 }
-
-                // Losse geldige 2-cijferige hoofdstuknummers aan het begin van de pagina/regel
-                const looseRegex = /^(\d{2})[-–—\s]\d{2}/g;
-                while ((match = looseRegex.exec(text)) !== null) {
-                    const ch = match[1];
-                    if (ATA_CHAPTER_NAMES[ch]) {
-                        candidates.push({
-                            code: ch + '-00',
-                            chapter: ch,
-                            y: Number(item.y) || 0,
-                            x: Number(item.x) || 0,
-                            priority: 60
-                        });
-                    }
-                }
             }
 
             if (!candidates.length) {
                 return { chapter: '00', sectionCode: '00-00' };
             }
 
-            // Sorteer op prioriteit en positie op de pagina (bovenaan heeft vaak de voorkeur)
+            // Sorteer kandidaten: prioriteit en positie
             candidates.sort((a, b) => {
                 return b.priority - a.priority || b.y - a.y || a.x - b.x;
             });
