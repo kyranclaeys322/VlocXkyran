@@ -499,7 +499,7 @@
             </div>
             <div class="context-section">
                 <div class="context-label">Geselecteerd vliegtuig</div>
-                <div id="selectedAircraftName" style="color:#cbd5e1; font-size:0.7rem; font-weight:bold;">Aircraft 1</div>
+                <div id="selectedAircraftName" style="color:#cbd5e1; font-size:0.7rem; font-weight:bold;">Falcon</div>
             </div>
             <div class="context-section">
                 <div class="context-label">Geladen Boeken</div>
@@ -574,7 +574,7 @@
             </div>
 
             <div class="upload-section">
-                <label id="uploadLabel">Manuals voor Aircraft 1 (max. 4):</label>
+                <label id="uploadLabel">Manuals voor Falcon (max. 4):</label>
                 <input type="file" id="pdfUpload" accept=".pdf" multiple onchange="processMultipleManuals(event)">
             </div>
         </div>
@@ -603,7 +603,7 @@
         // TOEGANGSCODE INGESTELD OP Vti2026:
         const CORRECT_ACCESS_CODE = "Vti2026";
 
-        let aircraftProfiles = [{ id: 1, name: 'Aircraft 1', books: [] }];
+        let aircraftProfiles = [{ id: 1, name: 'Falcon', books: [] }];
         let selectedAircraftIndex = 0;
         let loadedBooks = aircraftProfiles[0].books;
         let currentBookIndex = 0;
@@ -645,7 +645,7 @@
         }
 
         function addAircraft() {
-            const name = prompt('Naam van het vliegtuig:', `Aircraft ${aircraftProfiles.length + 1}`);
+            const name = prompt('Naam van het vliegtuig:', `Falcon ${aircraftProfiles.length + 1}`);
             if (!name || !name.trim()) return;
 
             aircraftProfiles.push({
