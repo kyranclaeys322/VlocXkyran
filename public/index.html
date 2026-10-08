@@ -98,8 +98,6 @@
             position: relative;
         }
 
-        /* ACCESS */
-
         #welcomeOverlay {
             position: absolute;
             inset: 0;
@@ -163,8 +161,6 @@
             margin-top: 10px;
         }
 
-        /* CONTEXT */
-
         .context-sidebar {
             width: 240px;
             background: #2b3544;
@@ -220,8 +216,6 @@
             font-size: 0.62rem;
             margin-top: 6px;
         }
-
-        /* BROWSER */
 
         .browse-sidebar {
             width: 460px;
@@ -378,8 +372,6 @@
             background: var(--airbus-orange);
         }
 
-        /* VIEWER */
-
         .viewer-pane {
             flex: 1;
             background: #e2e8f0;
@@ -529,8 +521,6 @@
 
 <div class="workspace">
 
-    <!-- ACCESS -->
-
     <div id="welcomeOverlay">
 
         <div class="welcome-card">
@@ -565,8 +555,6 @@
 
     </div>
 
-
-    <!-- CONTEXT -->
 
     <div class="context-sidebar">
 
@@ -629,8 +617,6 @@
     </div>
 
 
-    <!-- BROWSER -->
-
     <div class="browse-sidebar">
 
         <div class="browse-tabs">
@@ -656,8 +642,6 @@
         </div>
 
 
-        <!-- BROWSE -->
-
         <div
             id="tabBrowse"
             class="tab-content active">
@@ -678,8 +662,6 @@
 
         </div>
 
-
-        <!-- SEARCH -->
 
         <div
             id="tabSearch"
@@ -715,8 +697,6 @@
         </div>
 
 
-        <!-- TROUBLESHOOT -->
-
         <div
             id="tabTroubleshoot"
             class="tab-content">
@@ -751,8 +731,6 @@
         </div>
 
 
-        <!-- UPLOAD -->
-
         <div class="upload-section">
 
             <label id="uploadLabel">
@@ -782,8 +760,6 @@
 
     </div>
 
-
-    <!-- VIEWER -->
 
     <div class="viewer-pane">
 
@@ -1411,11 +1387,6 @@
                     "tree-children";
 
 
-                /*
-                 * PAGINA'S GROEPEREN PER
-                 * ATA SECTION CODE
-                 */
-
                 const sections = {};
 
 
@@ -1457,15 +1428,9 @@
                                 "tree-leaf";
 
 
-                            /*
-                             * HIER STAAT HET
-                             * ONDERWERP NAAST
-                             * HET ATA-NUMMER.
-                             */
-
                             leaf.innerHTML = `
                                 <b>${escapeHtml(code)}</b>
-                                — 
+                                —
                                 ${escapeHtml(
                                     firstPage.subject ||
                                     "Onbekend onderwerp"
@@ -1524,8 +1489,7 @@
 
 
     /* ============================================================
-       BELANGRIJK:
-       PDF.JS TEKST REGELS OPBOUWEN
+       PDF.JS TEKST REGELS
        ============================================================ */
 
     function buildTextLines(items) {
@@ -1543,12 +1507,6 @@
                 if (!text) {
                     return;
                 }
-
-                /*
-                 * PDF-coördinaten gebruiken Y.
-                 * Items met bijna dezelfde Y horen
-                 * bij dezelfde tekstregel.
-                 */
 
                 const y =
                     Math.round(
@@ -1624,14 +1582,6 @@
         const candidates = [];
 
 
-        /*
-         * Zoek ATA SECTION CODES.
-         *
-         * 21-32
-         * 21-32-50
-         * 21-32-50-01
-         */
-
         lines.forEach(
             line => {
 
@@ -1677,11 +1627,6 @@
                 }
 
 
-                /*
-                 * ATA 21
-                 * CHAPTER 21
-                 */
-
                 const chapterRegex =
                     /\b(?:ATA|CHAPTER)\s*(\d{2})\b/gi;
 
@@ -1723,11 +1668,6 @@
 
         }
 
-
-        /*
-         * Eerst codes die hoger op de pagina staan.
-         * Een echte SECTION CODE heeft voorrang.
-         */
 
         candidates.sort(
             (a,b) => {
@@ -1782,14 +1722,60 @@
     }
 
 
-    function isLikelySubject(text) {
+    /*
+     * Deze teksten zijn GEEN onderwerpen.
+     */
 
-        if (!text) {
-            return false;
+    function isForbiddenSubject(text) {
+
+        const value =
+            cleanSubject(text)
+                .toUpperCase();
+
+        if (!value) {
+            return true;
         }
+
+        const forbidden = [
+
+            "AVIONS MARCEL DASSAULT",
+
+            "FAN JET FALCON",
+
+            "MAINTENANCE MANUAL",
+
+            "MAINTENANCE",
+
+            "MANUAL",
+
+            "FAN JET",
+
+            "FALCON",
+
+            "DASSAULT",
+
+            "AVIONS MARCEL"
+
+        ];
+
+
+        return forbidden.some(
+            word =>
+                value === word ||
+                value.includes(word)
+        );
+
+    }
+
+
+    function isLikelySubject(text) {
 
         const value =
             cleanSubject(text);
+
+        if (!value) {
+            return false;
+        }
 
         if (
             value.length < 3 ||
@@ -1799,21 +1785,28 @@
         }
 
 
-        /*
-         * Niet als onderwerp gebruiken.
-         */
+        if (
+            isForbiddenSubject(value)
+        ) {
+            return false;
+        }
+
 
         if (
-            /^(page|pagina|chapter|chapter\s+\d+|ata\s+\d+|contents|table of contents|revision|date|issue|document|manual|maintenance manual)$/i
+            /^(page|pagina|chapter|ata|contents|table of contents|revision|date|issue|document)$/i
                 .test(value)
         ) {
             return false;
         }
 
 
-        /*
-         * Pure nummers uitsluiten.
-         */
+        if (
+            /^(page|pagina|chapter|ata)\s+\d+/i
+                .test(value)
+        ) {
+            return false;
+        }
+
 
         if (
             /^\d+(?:[\s.-]+\d+)*$/
@@ -1822,10 +1815,6 @@
             return false;
         }
 
-
-        /*
-         * PDF metadata / standaardtekst uitsluiten.
-         */
 
         if (
             /^(airbus|boeing|dassault|aero|copyright|confidential|proprietary|all rights reserved)$/i
@@ -1840,245 +1829,383 @@
     }
 
 
-    function calculateSubjectScore(
-        text,
-        line,
-        items
-    ) {
+    /*
+     * Controleer of de PDF een echte horizontale
+     * onderlijning bevat.
+     */
 
-        let score = 0;
+    async function detectUnderlineSegments(pdfPage) {
 
-        const clean =
-            cleanSubject(text);
+        const segments = [];
 
+        try {
 
-        if (!isLikelySubject(clean)) {
-            return -999;
-        }
+            const operatorList =
+                await pdfPage.getOperatorList();
 
+            const fnArray =
+                operatorList.fnArray;
 
-        /*
-         * Titels zijn meestal niet extreem lang.
-         */
-
-        if (
-            clean.length >= 5 &&
-            clean.length <= 60
-        ) {
-
-            score += 20;
-
-        }
+            const argsArray =
+                operatorList.argsArray;
 
 
-        /*
-         * Hoofdletters zijn heel gebruikelijk
-         * voor manual headings.
-         */
-
-        const letters =
-            clean.match(
-                /[A-Za-z]/g
-            ) || [];
-
-        const uppercase =
-            clean.match(
-                /[A-Z]/g
-            ) || [];
+            let currentX = 0;
+            let currentY = 0;
 
 
-        if (letters.length) {
-
-            const ratio =
-                uppercase.length /
-                letters.length;
-
-
-            if (ratio > 0.75) {
-                score += 45;
-            } else if (
-                ratio > 0.55
+            for (
+                let i = 0;
+                i < fnArray.length;
+                i++
             ) {
-                score += 20;
+
+                const fn =
+                    fnArray[i];
+
+                const args =
+                    argsArray[i];
+
+
+                /*
+                 * moveTo
+                 */
+
+                if (
+                    fn ===
+                    pdfjsLib.OPS.moveTo
+                ) {
+
+                    if (
+                        args &&
+                        args.length >= 2
+                    ) {
+
+                        currentX =
+                            Number(args[0]);
+
+                        currentY =
+                            Number(args[1]);
+
+                    }
+
+                    continue;
+
+                }
+
+
+                /*
+                 * lineTo
+                 */
+
+                if (
+                    fn ===
+                    pdfjsLib.OPS.lineTo
+                ) {
+
+                    if (
+                        args &&
+                        args.length >= 2
+                    ) {
+
+                        const newX =
+                            Number(args[0]);
+
+                        const newY =
+                            Number(args[1]);
+
+
+                        /*
+                         * Alleen bijna horizontale
+                         * lijnen die lang genoeg zijn.
+                         */
+
+                        if (
+                            Math.abs(
+                                newY -
+                                currentY
+                            ) <= 2 &&
+
+                            Math.abs(
+                                newX -
+                                currentX
+                            ) >= 10
+                        ) {
+
+                            segments.push({
+
+                                x1:
+                                    currentX,
+
+                                y1:
+                                    currentY,
+
+                                x2:
+                                    newX,
+
+                                y2:
+                                    newY
+
+                            });
+
+                        }
+
+
+                        currentX =
+                            newX;
+
+                        currentY =
+                            newY;
+
+                    }
+
+                    continue;
+
+                }
+
             }
 
-        }
+        } catch (error) {
 
-
-        /*
-         * Technische woorden.
-         */
-
-        if (
-            /\b(system|unit|control|valve|pump|switch|indicator|display|circuit|generator|battery|sensor|actuator|landing|gear|brake|wheel|door|window|engine|fuel|hydraulic|pneumatic|oxygen|fire|lighting|navigation|communication|pressure|temperature|air|pack|flow)\b/i
-                .test(clean)
-        ) {
-
-            score += 35;
+            console.warn(
+                "Onderlijningen konden niet worden gelezen:",
+                error
+            );
 
         }
 
 
-        /*
-         * Een titel bovenaan de pagina krijgt extra punten.
-         */
-
-        if (line) {
-
-            /*
-             * Y is hoger voor tekst bovenaan de pagina.
-             */
-
-            if (line.y > 500) {
-                score += 25;
-            }
-
-            if (line.y > 650) {
-                score += 20;
-            }
-
-        }
-
-
-        /*
-         * Titels met meerdere woorden zijn interessanter.
-         */
-
-        const wordCount =
-            clean.split(/\s+/).length;
-
-        if (wordCount >= 2) {
-            score += 15;
-        }
-
-
-        /*
-         * Een korte zin is vaak een heading.
-         */
-
-        if (
-            clean.length <= 40
-        ) {
-            score += 10;
-        }
-
-
-        return score;
+        return segments;
 
     }
 
 
     /*
-     * Zoek onderwerp.
-     *
-     * We proberen eerst de tekst die het meest
-     * op een titel lijkt.
+     * Controleer of een tekstregel onderlijnd is.
      */
 
-    function findSubject(
+    function isTextUnderlined(
+        line,
+        underlineSegments
+    ) {
+
+        if (
+            !line ||
+            !line.items ||
+            !underlineSegments ||
+            !underlineSegments.length
+        ) {
+
+            return false;
+
+        }
+
+
+        for (
+            const item of line.items
+        ) {
+
+            const textLeft =
+                Number(item.x) || 0;
+
+            const textRight =
+                textLeft +
+                (
+                    Number(item.width) ||
+                    0
+                );
+
+            const textY =
+                Number(item.y) || 0;
+
+
+            for (
+                const segment
+                of underlineSegments
+            ) {
+
+                if (
+                    Math.abs(
+                        segment.y1 -
+                        segment.y2
+                    ) > 2
+                ) {
+                    continue;
+                }
+
+
+                const underlineLeft =
+                    Math.min(
+                        segment.x1,
+                        segment.x2
+                    );
+
+                const underlineRight =
+                    Math.max(
+                        segment.x1,
+                        segment.x2
+                    );
+
+
+                const overlap =
+                    Math.min(
+                        textRight,
+                        underlineRight
+                    ) -
+                    Math.max(
+                        textLeft,
+                        underlineLeft
+                    );
+
+
+                if (
+                    overlap <= 0
+                ) {
+                    continue;
+                }
+
+
+                const underlineY =
+                    (
+                        segment.y1 +
+                        segment.y2
+                    ) / 2;
+
+
+                const distance =
+                    Math.abs(
+                        underlineY -
+                        textY
+                    );
+
+
+                /*
+                 * De PDF kan de onderlijning
+                 * enkele pixels onder de tekst zetten.
+                 */
+
+                if (
+                    distance >= 1 &&
+                    distance <= 15
+                ) {
+
+                    return true;
+
+                }
+
+            }
+
+        }
+
+
+        return false;
+
+    }
+
+
+    /*
+     * Sommige PDF's slaan de onderlijning niet op
+     * als een grafische lijn, maar als underscores.
+     */
+
+    function containsUnderlineCharacters(text) {
+
+        return /_{2,}|[-]{5,}/.test(
+            String(text || "")
+        );
+
+    }
+
+
+    /*
+     * Bepaal of een regel vetgedrukt is.
+     * Dit is alleen een extra aanwijzing.
+     */
+
+    function isTextBold(line) {
+
+        if (
+            !line ||
+            !line.items
+        ) {
+            return false;
+        }
+
+
+        return line.items.some(
+            item =>
+                /bold|black|heavy|demi|semibold/i
+                    .test(
+                        item.fontName || ""
+                    )
+        );
+
+    }
+
+
+    /*
+     * Zoek het echte onderwerp.
+     *
+     * Prioriteit:
+     *
+     * 1. Onderstreepte tekst
+     * 2. Onderstreepte tekst onder ATA-code
+     * 3. Tekst direct onder ATA-code
+     * 4. Beperkte fallback
+     */
+
+    async function findSubject(
         pdfPage,
         items,
         fullText,
-        ataInfo
+        ataInfo,
+        underlineSegments
     ) {
 
         const lines =
             buildTextLines(items);
 
 
-        const candidates = [];
-
-
-        lines.forEach(
-            (line, index) => {
-
-                /*
-                 * Als deze regel de ATA-code bevat,
-                 * is hij meestal de sectieregel.
-                 *
-                 * De regel zelf is echter vaak niet
-                 * het onderwerp.
-                 */
-
-                const normalizedLine =
-                    normalizeLower(
-                        line.text
-                    );
-
-
-                if (
-                    normalizedLine.includes(
-                        normalizeLower(
-                            ataInfo.sectionCode
-                        )
-                    )
-                ) {
-
-                    /*
-                     * Volgende regel kan de titel zijn.
-                     */
-
-                    if (
-                        lines[index + 1]
-                    ) {
-
-                        const next =
-                            lines[index + 1];
-
-
-                        candidates.push({
-
-                            text:
-                                next.text,
-
-                            line:
-                                next,
-
-                            score:
-                                120
-
-                        });
-
-                    }
-
-                }
-
-
-                /*
-                 * Elke regel beoordelen als mogelijke
-                 * heading.
-                 */
-
-                const score =
-                    calculateSubjectScore(
-                        line.text,
-                        line,
-                        items
-                    );
-
-
-                if (score > 0) {
-
-                    candidates.push({
-
-                        text:
-                            line.text,
-
-                        line,
-
-                        score
-
-                    });
-
-                }
-
-            }
-        );
+        if (!lines.length) {
+            return "Onbekend onderwerp";
+        }
 
 
         /*
-         * Zoek expliciete titelwoorden.
+         * Zoek positie van de ATA-code.
          */
+
+        let ataIndex = -1;
+
+
+        if (
+            ataInfo &&
+            ataInfo.sectionCode &&
+            ataInfo.sectionCode !== "00-00"
+        ) {
+
+            ataIndex =
+                lines.findIndex(
+                    line =>
+                        normalizeText(
+                            line.text
+                        )
+                        .includes(
+                            normalizeText(
+                                ataInfo.sectionCode
+                            )
+                        )
+                );
+
+        }
+
+
+        /* ========================================================
+           1. ONDERSTREEPTE TEKST
+           ======================================================== */
+
+        const underlinedCandidates = [];
+
 
         lines.forEach(
             (line, index) => {
@@ -2090,158 +2217,339 @@
 
 
                 if (
-                    /^(subject|description|title)\s*:/i
-                        .test(text)
+                    !isLikelySubject(text)
+                ) {
+                    return;
+                }
+
+
+                /*
+                 * Normale grafische onderlijning.
+                 */
+
+                const graphicalUnderline =
+                    isTextUnderlined(
+                        line,
+                        underlineSegments
+                    );
+
+
+                /*
+                 * Tekstregel kan zelf underscores
+                 * bevatten.
+                 */
+
+                const underscoreUnderline =
+                    containsUnderlineCharacters(
+                        line.text
+                    );
+
+
+                if (
+                    !graphicalUnderline &&
+                    !underscoreUnderline
+                ) {
+                    return;
+                }
+
+
+                let score = 100;
+
+
+                /*
+                 * Onderwerp moet onder ATA-code staan.
+                 */
+
+                if (
+                    ataIndex >= 0 &&
+                    index > ataIndex
                 ) {
 
-                    const afterColon =
-                        text
-                            .replace(
-                                /^(subject|description|title)\s*:/i,
-                                ""
-                            )
-                            .trim();
+                    score += 100;
+
+                    const distance =
+                        index -
+                        ataIndex;
 
 
                     if (
-                        isLikelySubject(
-                            afterColon
-                        )
+                        distance === 1
                     ) {
-
-                        candidates.push({
-
-                            text:
-                                afterColon,
-
-                            line,
-
-                            score:
-                                300
-
-                        });
-
+                        score += 50;
+                    } else if (
+                        distance <= 3
+                    ) {
+                        score += 30;
+                    } else if (
+                        distance <= 6
+                    ) {
+                        score += 10;
                     }
 
                 }
 
 
                 /*
-                 * Als een regel "ATA xx" bevat,
-                 * kijk naar de volgende 1-2 regels.
+                 * Vet + onderlijnd is zeer waarschijnlijk
+                 * een echte sectietitel.
                  */
 
                 if (
-                    /\b(?:ATA|CHAPTER)\s*\d{2}\b/i
-                        .test(text)
+                    isTextBold(line)
                 ) {
-
-                    for (
-                        let offset = 1;
-                        offset <= 2;
-                        offset++
-                    ) {
-
-                        const next =
-                            lines[
-                                index + offset
-                            ];
-
-                        if (!next) {
-                            continue;
-                        }
-
-
-                        const nextText =
-                            cleanSubject(
-                                next.text
-                            );
-
-
-                        if (
-                            isLikelySubject(
-                                nextText
-                            )
-                        ) {
-
-                            candidates.push({
-
-                                text:
-                                    nextText,
-
-                                line:
-                                    next,
-
-                                score:
-                                    220 -
-                                    offset * 20
-
-                            });
-
-                        }
-
-                    }
-
+                    score += 25;
                 }
+
+
+                const wordCount =
+                    text.split(/\s+/).length;
+
+
+                if (
+                    wordCount >= 2 &&
+                    wordCount <= 12
+                ) {
+                    score += 20;
+                }
+
+
+                if (
+                    text.length <= 80
+                ) {
+                    score += 10;
+                }
+
+
+                underlinedCandidates.push({
+
+                    text,
+
+                    score,
+
+                    index
+
+                });
 
             }
         );
 
 
-        /*
-         * Sorteer kandidaten.
-         */
+        if (
+            underlinedCandidates.length
+        ) {
 
-        candidates.sort(
-            (a,b) =>
-                b.score -
-                a.score
+            underlinedCandidates.sort(
+                (a,b) =>
+                    b.score -
+                    a.score
+            );
+
+
+            return cleanSubject(
+                underlinedCandidates[0].text
+            );
+
+        }
+
+
+        /* ========================================================
+           2. ZOEK EEN TEKSTREGEL DIRECT ONDER DE ATA-CODE
+           ======================================================== */
+
+        if (
+            ataIndex >= 0
+        ) {
+
+            for (
+                let offset = 1;
+                offset <= 5;
+                offset++
+            ) {
+
+                const index =
+                    ataIndex +
+                    offset;
+
+
+                const line =
+                    lines[index];
+
+
+                if (!line) {
+                    continue;
+                }
+
+
+                const text =
+                    cleanSubject(
+                        line.text
+                    );
+
+
+                if (
+                    !isLikelySubject(text)
+                ) {
+                    continue;
+                }
+
+
+                /*
+                 * Als de volgende regel een reeks
+                 * underscores is, gebruik de regel
+                 * daarvoor.
+                 */
+
+                if (
+                    containsUnderlineCharacters(
+                        text
+                    )
+                ) {
+
+                    continue;
+
+                }
+
+
+                /*
+                 * Een echte technische titel
+                 * onder de ATA-code.
+                 */
+
+                if (
+                    text.length <= 80
+                ) {
+
+                    return text;
+
+                }
+
+            }
+
+        }
+
+
+        /* ========================================================
+           3. FALLBACK
+           ======================================================== */
+
+        const candidates = [];
+
+
+        lines.forEach(
+            (line, index) => {
+
+                const text =
+                    cleanSubject(
+                        line.text
+                    );
+
+
+                if (
+                    !isLikelySubject(text)
+                ) {
+                    return;
+                }
+
+
+                let score = 0;
+
+
+                /*
+                 * Niet zomaar bovenaan de pagina
+                 * iets als onderwerp nemen.
+                 */
+
+                if (
+                    ataIndex >= 0 &&
+                    index > ataIndex
+                ) {
+
+                    score += 60;
+
+                    const distance =
+                        index -
+                        ataIndex;
+
+
+                    if (
+                        distance <= 5
+                    ) {
+                        score += 30;
+                    }
+
+                }
+
+
+                /*
+                 * Technische woorden.
+                 */
+
+                if (
+                    /\b(system|unit|control|valve|pump|switch|indicator|display|circuit|generator|battery|sensor|actuator|landing|gear|brake|wheel|door|window|engine|fuel|hydraulic|pneumatic|oxygen|fire|lighting|navigation|communication|pressure|temperature|air|pack|flow)\b/i
+                        .test(text)
+                ) {
+
+                    score += 30;
+
+                }
+
+
+                const wordCount =
+                    text.split(/\s+/).length;
+
+
+                if (
+                    wordCount >= 2 &&
+                    wordCount <= 12
+                ) {
+
+                    score += 20;
+
+                }
+
+
+                if (
+                    text.length <= 60
+                ) {
+
+                    score += 10;
+
+                }
+
+
+                candidates.push({
+
+                    text,
+
+                    score,
+
+                    index
+
+                });
+
+            }
         );
 
-
-        /*
-         * Beste kandidaat.
-         */
 
         if (
             candidates.length
         ) {
 
-            let subject =
-                cleanSubject(
-                    candidates[0].text
-                );
+            candidates.sort(
+                (a,b) =>
+                    b.score -
+                    a.score
+            );
 
 
-            /*
-             * Geen gigantische tekstblokken.
-             */
-
-            if (
-                subject.length > 80
-            ) {
-
-                subject =
-                    subject
-                        .substring(
-                            0,
-                            80
-                        )
-                        .trim();
-
-            }
-
-
-            return subject;
+            return cleanSubject(
+                candidates[0].text
+            );
 
         }
 
 
-        /*
-         * Fallback.
-         */
-
-        return "General Information";
+        return "Onbekend onderwerp";
 
     }
 
@@ -2384,10 +2692,6 @@
                         await pdfPage.getTextContent();
 
 
-                    /*
-                     * PDF.js tekst-items.
-                     */
-
                     const textItems =
                         textContent.items
                             .map(
@@ -2451,15 +2755,26 @@
 
 
                     /*
-                     * ONDERWERP.
+                     * Onderlijningen van de PDF ophalen.
+                     */
+
+                    const underlineSegments =
+                        await detectUnderlineSegments(
+                            pdfPage
+                        );
+
+
+                    /*
+                     * ECHT ONDERWERP.
                      */
 
                     const subject =
-                        findSubject(
+                        await findSubject(
                             pdfPage,
                             textItems,
                             fullText,
-                            ataInfo
+                            ataInfo,
+                            underlineSegments
                         );
 
 
@@ -2469,10 +2784,6 @@
                             pageNumber
                         );
 
-
-                    /*
-                     * Opslaan.
-                     */
 
                     pages.push({
 
@@ -2550,7 +2861,8 @@
         }
 
 
-        progress.style.width = "100%";
+        progress.style.width =
+            "100%";
 
 
         loadedBooks =
