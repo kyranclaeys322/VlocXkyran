@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>AeroNex - ATA Manual Viewer</title>
-    <!-- PDF.js bibliotheek -->
+
+    <!-- PDF.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
     <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
+
     <style>
         :root {
             --airbus-header: #071930;
@@ -55,7 +60,7 @@
             font-size: 1rem;
             font-weight: bold;
             letter-spacing: 1px;
-            color: #ffffff;
+            color: #fff;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -67,23 +72,26 @@
         }
 
         .doc-view-btn {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255,255,255,0.1);
             color: #fff;
             padding: 5px 12px;
             font-size: 0.8rem;
             border-radius: 3px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255,255,255,0.2);
             cursor: pointer;
-            transition: background 0.2s;
         }
 
         .doc-view-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255,255,255,0.2);
         }
 
         .header-center-info {
             font-size: 0.8rem;
             color: #cbd5e1;
+            max-width: 50%;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
         }
 
         .header-right {
@@ -100,20 +108,20 @@
             position: relative;
         }
 
-        /* BEGINSCHERM MET TOEGANGSCODE */
+        /* ACCESS SCREEN */
+
         #welcomeOverlay {
             position: absolute;
-            top: 0;
-            left: 0;
+            inset: 0;
             width: 100%;
             height: 100%;
-            background: rgba(7, 25, 48, 0.95);
+            background: rgba(7,25,48,0.95);
             z-index: 100;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            color: #ffffff;
+            color: #fff;
             text-align: center;
             padding: 20px;
         }
@@ -124,6 +132,7 @@
             padding: 40px;
             border-radius: 8px;
             max-width: 450px;
+            width: 100%;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             display: flex;
             flex-direction: column;
@@ -132,7 +141,6 @@
 
         .welcome-card h1 {
             font-size: 1.8rem;
-            margin-bottom: 5px;
             color: #fff;
         }
 
@@ -173,7 +181,6 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            transition: filter 0.2s;
         }
 
         .code-submit-btn:hover {
@@ -185,6 +192,8 @@
             font-size: 0.8rem;
             display: none;
         }
+
+        /* LEFT CONTEXT */
 
         .context-sidebar {
             width: 240px;
@@ -237,10 +246,6 @@
             cursor: pointer;
         }
 
-        .aircraft-add-btn:hover {
-            filter: brightness(1.08);
-        }
-
         .aircraft-hint {
             color: #94a3b8;
             font-size: 0.62rem;
@@ -255,9 +260,11 @@
             font-size: 0.65rem;
         }
 
+        /* BROWSER */
+
         .browse-sidebar {
             width: 460px;
-            background-color: #ffffff;
+            background-color: #fff;
             color: #1e293b;
             border-right: 1px solid var(--border-color);
             display: flex;
@@ -406,6 +413,8 @@
             width: 100%;
         }
 
+        /* VIEWER */
+
         .viewer-pane {
             flex: 1;
             background-color: #e2e8f0;
@@ -467,7 +476,8 @@
             height: auto;
         }
 
-        /* Styling voor de ATA Overzichtspagina in de viewer */
+        /* ATA OVERVIEW */
+
         #ataOverviewContainer {
             background: #fff;
             width: 100%;
@@ -494,7 +504,8 @@
             font-size: 0.85rem;
         }
 
-        .ata-table th, .ata-table td {
+        .ata-table th,
+        .ata-table td {
             border: 1px solid #cbd5e1;
             padding: 8px 12px;
             text-align: left;
@@ -509,7 +520,8 @@
             background-color: #f8fafc;
         }
 
-        /* Voortgangsbalk styling */
+        /* PROGRESS */
+
         .progress-bar-container {
             width: 100%;
             background-color: #cbd5e1;
@@ -526,856 +538,2706 @@
             background-color: var(--airbus-orange);
             transition: width 0.1s linear;
         }
+
+        @media (max-width: 1100px) {
+            .context-sidebar {
+                width: 190px;
+            }
+
+            .browse-sidebar {
+                width: 360px;
+            }
+        }
+
+        @media (max-width: 850px) {
+            .context-sidebar {
+                display: none;
+            }
+
+            .browse-sidebar {
+                width: 320px;
+            }
+
+            .header-center-info {
+                display: none;
+            }
+        }
     </style>
 </head>
+
 <body>
 
-    <header>
-        <div class="header-left">
-            <div class="airbus-logo">AeroNex <span>Kyran</span></div>
-            <button class="doc-view-btn" onclick="toggleAtaChaptersOverview()">📋 Ata chapters</button>
-        </div>
-        <div class="header-center-info" id="headerInfoText">
-            AeroNex MANUAL VIEWER (MAX 4 BOEKEN)
-        </div>
-        <div class="header-right">
-            HELP CENTRE
-        </div>
-    </header>
+<header>
 
-    <div class="workspace">
-        <!-- BEGINSCHERM MET TOEGANGSCODE -->
-        <div id="welcomeOverlay">
-            <div class="welcome-card">
-                <h1>AeroNex <span>Kyran</span></h1>
-                <p>Voer de toegangscode in om de applicatie te ontgrendelen.</p>
-                <div class="code-input-container">
-                    <input type="password" id="accessCodeInput" class="code-input" placeholder="Voer code in..." onkeydown="if(event.key==='Enter') checkAccessCode()">
-                    <button class="code-submit-btn" onclick="checkAccessCode()">Ontgrendel</button>
-                    <div id="codeErrorMsg">Onjuiste code. Probeer het opnieuw.</div>
-                </div>
-            </div>
+    <div class="header-left">
+
+        <div class="airbus-logo">
+            AeroNex <span>Kyran</span>
         </div>
 
-        <div class="context-sidebar">
-            <div class="context-header">☰ CONTEXT</div>
-            <div class="context-section">
-                <div class="context-label">Vliegtuig</div>
-                <div class="aircraft-select-row">
-                    <select id="aircraftSelect" class="aircraft-select" onchange="selectAircraft(this.value)"></select>
-                    <button class="aircraft-add-btn" onclick="addAircraft()" title="Vliegtuig toevoegen">+</button>
-                </div>
-                <div class="aircraft-hint">Kies een vliegtuig. Manuals die je toevoegt horen alleen bij het geselecteerde vliegtuig.</div>
-            </div>
-            <div class="context-section">
-                <div class="context-label">Geselecteerd vliegtuig</div>
-                <div id="selectedAircraftName" style="color:#cbd5e1; font-size:0.7rem; font-weight:bold;">Falcon</div>
-            </div>
-            <div class="context-section">
-                <div class="context-label">Geladen Boeken</div>
-                <div id="loadedBooksCount" style="color: #cbd5e1; font-size: 0.7rem;">0 / 4 boeken geladen</div>
-            </div>
-        </div>
+        <button
+            class="doc-view-btn"
+            onclick="toggleAtaChaptersOverview()">
+            📋 ATA Chapters
+        </button>
 
-        <div class="browse-sidebar">
-            <div class="browse-tabs">
-                <div class="b-tab active" onclick="switchTab('browse', this)">📁 Browse</div>
-                <div class="b-tab" onclick="switchTab('search', this)">🔍 Search (Ctrl+F)</div>
-                <div class="b-tab" onclick="switchTab('troubleshoot', this)">🛠️ Troubleshoot</div>
-            </div>
-
-            <!-- TAB 1: BROWSE & BOOMSTRUCTUUR -->
-            <div id="tabBrowse" class="tab-content active">
-                <div style="font-weight:bold; margin-bottom:4px; color:#071930;">AeroNex MANUALS</div>
-                <div style="color: #64748b; font-size: 0.68rem; padding-bottom: 8px;">
-                    Sectienummers worden ingedeeld op het hoofdbestanddeel (bijv. 32 in Chapter 32).
-                </div>
-                <div id="treeContainer" style="flex:1; overflow-y:auto;">
-                    <i>Nog geen boeken geladen. Gebruik hieronder de uploadknop.</i>
-                </div>
-            </div>
-
-            <!-- TAB 2: GLOBALE ZOEKMACHINE -->
-            <div id="tabSearch" class="tab-content">
-                <div style="font-weight:bold; margin-bottom:4px; color:#071930;">GLOBALE ZOEKMACHINE</div>
-                <div style="color: #64748b; font-size: 0.68rem; margin-bottom: 8px;">
-                    Doorzoek alle geladen boeken op trefwoord, onderwerp of nummer.
-                </div>
-                <div class="search-box-container">
-                    <input type="text" id="globalSearchInput" class="search-input" placeholder="Typ zoekterm..." onkeydown="if(event.key==='Enter') executeGlobalSearch()">
-                    <button class="search-btn" onclick="executeGlobalSearch()">Zoek</button>
-                </div>
-                <div id="searchResultsContainer" style="flex:1; overflow-y:auto;">
-                    <i>Voer een zoekterm in om te zoeken.</i>
-                </div>
-            </div>
-
-            <!-- TAB 3: TROUBLESHOOT -->
-            <div id="tabTroubleshoot" class="tab-content">
-                <div style="font-weight:bold; margin-bottom:4px; color:#071930;">
-                    TROUBLESHOOT
-                </div>
-
-                <div style="color:#64748b; font-size:0.68rem; margin-bottom:8px;">
-                    Zoek foutmeldingen, waarschuwingen of ATA-hoofdstukken in de geladen manuals.
-                </div>
-
-                <div class="search-box-container">
-                    <input
-                        type="text"
-                        id="troubleshootInput"
-                        class="search-input"
-                        placeholder="Bijv. HYD LOW PRESS of ATA 29"
-                        onkeydown="if(event.key==='Enter') runTroubleshoot()"
-                    >
-                    <button class="search-btn" onclick="runTroubleshoot()">
-                        Zoek
-                    </button>
-                </div>
-
-                <div id="troubleshootResults" style="flex:1; overflow-y:auto;">
-                    <i>Zoek een foutmelding of ATA-hoofdstuk.</i>
-                </div>
-
-                <div style="color:#64748b; font-size:0.65rem; margin-top:10px;">
-                    Resultaten zijn zoekmatches, geen automatisch goedgekeurde onderhoudsprocedures.
-                    Controleer altijd de toepasselijke goedgekeurde manual.
-                </div>
-            </div>
-
-            <div class="upload-section">
-                <label id="uploadLabel">Manuals voor Falcon (max. 4):</label>
-                <input type="file" id="pdfUpload" accept=".pdf" multiple onchange="processMultipleManuals(event)">
-                <!-- Voortgangsbalk toegevoegd -->
-                <div id="progressBarContainer" class="progress-bar-container">
-                    <div id="progressBarFill" class="progress-bar-fill"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="viewer-pane">
-            <div class="viewer-toolbar" id="viewerToolbar" style="display: none;">
-                <div class="page-controls">
-                    <button class="btn-action" onclick="prevPage()">Vorige</button>
-                    <span id="pageIndicator">Pagina 1 / 1</span>
-                    <button class="btn-action" onclick="nextPage()">Volgende</button>
-                </div>
-                <div style="color: #64748b;" id="viewerStatus">Gereed</div>
-            </div>
-
-            <!-- PDF VIEWER CONTAINER -->
-            <div class="pdf-canvas-container" id="pdfContainerWrapper">
-                <canvas id="pdfCanvas"></canvas>
-            </div>
-
-            <!-- ATA CHAPTERS OVERVIEW PAGE -->
-            <div id="ataOverviewContainer">
-                <h2>Volledig Overzicht ATA Chapters</h2>
-                <table class="ata-table">
-                    <thead>
-                        <tr>
-                            <th>Chap.</th>
-                            <th>Subject</th>
-                            <th>Chap.</th>
-                            <th>Subject</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>00</td><td>Air Vehicle General</td><td>51</td><td>Standard Practices – Structures</td></tr>
-                        <tr><td>04</td><td>Airworthiness Limitations</td><td>52</td><td>Doors</td></tr>
-                        <tr><td>05</td><td>Time Limits/Maintenance Checks</td><td>53</td><td>Fuselage</td></tr>
-                        <tr><td>06</td><td>Dimensions and Areas</td><td>54</td><td>Nacelles and Pylons</td></tr>
-                        <tr><td>07</td><td>Lifting, Shoring, Recovering and Transporting</td><td>55</td><td>Stabilizers</td></tr>
-                        <tr><td>08</td><td>Levelling and Weighing</td><td>56</td><td>Windows and Canopies</td></tr>
-                        <tr><td>09</td><td>Handling and Taxiing</td><td>57</td><td>Wings</td></tr>
-                        <tr><td>10</td><td>Parking and Mooring</td><td>60</td><td>Standard Practices – Propeller or Rotor</td></tr>
-                        <tr><td>11</td><td>Placards and Markings</td><td>61</td><td>Propellers and Propulsors</td></tr>
-                        <tr><td>12</td><td>Servicing</td><td>62</td><td>Main Rotors</td></tr>
-                        <tr><td>14</td><td>Air Vehicle Loading and Offloading</td><td>63</td><td>Main Rotor Drives</td></tr>
-                        <tr><td>15</td><td>Aircrew Information</td><td>64</td><td>Tail Rotor</td></tr>
-                        <tr><td>16</td><td>Change of Role</td><td>65</td><td>Tail Rotor Drive</td></tr>
-                        <tr><td>18</td><td>Vibration and Noise Analysis and Attenuation</td><td>66</td><td>Folding Blades and Pylon</td></tr>
-                        <tr><td>20</td><td>Standard Practices – Airframe Systems</td><td>67</td><td>Rotors Flight Control</td></tr>
-                        <tr><td>21</td><td>Environmental Control</td><td>70</td><td>Standard Practices – Engine</td></tr>
-                        <tr><td>22</td><td>Auto Flight</td><td>71</td><td>Power Plant</td></tr>
-                        <tr><td>23</td><td>Communications</td><td>72</td><td>Engine / Engine turbine/turboprop</td></tr>
-                        <tr><td>24</td><td>Electrical Power</td><td>73</td><td>Engine Fuel and Control</td></tr>
-                        <tr><td>25</td><td>Equipment and Furnishings</td><td>74</td><td>Ignition</td></tr>
-                        <tr><td>26</td><td>Fire Protection</td><td>75</td><td>Air</td></tr>
-                        <tr><td>27</td><td>Flight Controls</td><td>76</td><td>Engine Controls</td></tr>
-                        <tr><td>28</td><td>Fuel</td><td>77</td><td>Engine Indicating</td></tr>
-                        <tr><td>29</td><td>Hydraulic Power</td><td>78</td><td>Exhaust</td></tr>
-                        <tr><td>30</td><td>Ice and Rain Protection</td><td>79</td><td>Oil</td></tr>
-                        <tr><td>31</td><td>Indicating and Recording Systems</td><td>80</td><td>Starting</td></tr>
-                        <tr><td>32</td><td>Landing Gear</td><td>81</td><td>Turbines</td></tr>
-                        <tr><td>33</td><td>Lights</td><td>82</td><td>Water Injection</td></tr>
-                        <tr><td>34</td><td>Navigation</td><td>83</td><td>Accessory Gearboxes</td></tr>
-                        <tr><td>35</td><td>Oxygen</td><td>84</td><td>Propulsion Augmentation</td></tr>
-                        <tr><td>36</td><td>Pneumatic</td><td>91</td><td>Charts and Diagrams</td></tr>
-                        <tr><td>37</td><td>Vacuum</td><td>93</td><td>Surveillance</td></tr>
-                        <tr><td>38</td><td>Water and Waste</td><td>94</td><td>Weapons Systems</td></tr>
-                        <tr><td>41</td><td>Water Ballast</td><td>95</td><td>Crew Escape and Safety</td></tr>
-                        <tr><td>43</td><td>Tactical Communications</td><td>96</td><td>Missiles, Drones and Telemetry</td></tr>
-                        <tr><td>45</td><td>Central Maintenance System (CMS)</td><td>97</td><td>Image Recording</td></tr>
-                        <tr><td>46</td><td>Systems Integration and Display</td><td>98</td><td>Meteorological and Atmospheric Research</td></tr>
-                        <tr><td>47</td><td>Liquid Nitrogen</td><td></td><td></td></tr>
-                        <tr><td>48</td><td>In-Flight Refuelling Tanker</td><td></td><td></td></tr>
-                        <tr><td>49</td><td>Airborne Auxiliary Power</td><td></td><td></td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
     </div>
 
-    <script>
-        // ================================================================
-        // AeroNex - ROBUUSTE ATA PARSER + FULL TEXT SEARCH + TOEGANGSCODE
-        // ================================================================
-        
-        const CORRECT_ACCESS_CODE = "Vti2026";
+    <div
+        class="header-center-info"
+        id="headerInfoText">
+        AeroNex MANUAL VIEWER (MAX 4 BOEKEN)
+    </div>
 
-        let aircraftProfiles = [{ id: 1, name: 'Falcon', books: [] }];
-        let selectedAircraftIndex = 0;
-        let loadedBooks = aircraftProfiles[0].books;
-        let currentBookIndex = 0;
-        let activePageNum = 1;
-        let renderScale = 1.3;
-        let canvasElement = document.getElementById('pdfCanvas');
-        let canvasContext = canvasElement.getContext('2d');
-        let isShowingAtaOverview = false;
+    <div class="header-right">
+        HELP CENTRE
+    </div>
 
-        function getCurrentAircraft() {
-            return aircraftProfiles[selectedAircraftIndex];
+</header>
+
+
+<div class="workspace">
+
+    <!-- ACCESS -->
+
+    <div id="welcomeOverlay">
+
+        <div class="welcome-card">
+
+            <h1>
+                AeroNex <span>Kyran</span>
+            </h1>
+
+            <p>
+                Voer de toegangscode in om de applicatie te ontgrendelen.
+            </p>
+
+            <div class="code-input-container">
+
+                <input
+                    type="password"
+                    id="accessCodeInput"
+                    class="code-input"
+                    placeholder="Voer code in..."
+                    onkeydown="if(event.key==='Enter') checkAccessCode()"
+                >
+
+                <button
+                    class="code-submit-btn"
+                    onclick="checkAccessCode()">
+                    Ontgrendel
+                </button>
+
+                <div id="codeErrorMsg">
+                    Onjuiste code. Probeer het opnieuw.
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- CONTEXT -->
+
+    <div class="context-sidebar">
+
+        <div class="context-header">
+            ☰ CONTEXT
+        </div>
+
+        <div class="context-section">
+
+            <div class="context-label">
+                Vliegtuig
+            </div>
+
+            <div class="aircraft-select-row">
+
+                <select
+                    id="aircraftSelect"
+                    class="aircraft-select"
+                    onchange="selectAircraft(this.value)">
+                </select>
+
+                <button
+                    class="aircraft-add-btn"
+                    onclick="addAircraft()"
+                    title="Vliegtuig toevoegen">
+                    +
+                </button>
+
+            </div>
+
+            <div class="aircraft-hint">
+                Kies een vliegtuig. Manuals die je toevoegt horen alleen bij het geselecteerde vliegtuig.
+            </div>
+
+        </div>
+
+
+        <div class="context-section">
+
+            <div class="context-label">
+                Geselecteerd vliegtuig
+            </div>
+
+            <div
+                id="selectedAircraftName"
+                style="color:#cbd5e1;font-size:0.7rem;font-weight:bold;">
+                Falcon
+            </div>
+
+        </div>
+
+
+        <div class="context-section">
+
+            <div class="context-label">
+                Geladen Boeken
+            </div>
+
+            <div
+                id="loadedBooksCount"
+                style="color:#cbd5e1;font-size:0.7rem;">
+                0 / 4 boeken geladen
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- BROWSER -->
+
+    <div class="browse-sidebar">
+
+        <div class="browse-tabs">
+
+            <div
+                class="b-tab active"
+                onclick="switchTab('browse', this)">
+                📁 Browse
+            </div>
+
+            <div
+                class="b-tab"
+                onclick="switchTab('search', this)">
+                🔍 Search (Ctrl+F)
+            </div>
+
+            <div
+                class="b-tab"
+                onclick="switchTab('troubleshoot', this)">
+                🛠️ Troubleshoot
+            </div>
+
+        </div>
+
+
+        <!-- BROWSE -->
+
+        <div
+            id="tabBrowse"
+            class="tab-content active">
+
+            <div
+                style="font-weight:bold;margin-bottom:4px;color:#071930;">
+                AeroNex MANUALS
+            </div>
+
+            <div
+                style="color:#64748b;font-size:0.68rem;padding-bottom:8px;">
+                Pagina's worden automatisch verdeeld volgens het eerste ATA-nummer.
+            </div>
+
+            <div
+                id="treeContainer"
+                style="flex:1;overflow-y:auto;">
+
+                <i>
+                    Nog geen boeken geladen. Gebruik hieronder de uploadknop.
+                </i>
+
+            </div>
+
+        </div>
+
+
+        <!-- SEARCH -->
+
+        <div
+            id="tabSearch"
+            class="tab-content">
+
+            <div
+                style="font-weight:bold;margin-bottom:4px;color:#071930;">
+                GLOBALE ZOEKMACHINE
+            </div>
+
+            <div
+                style="color:#64748b;font-size:0.68rem;margin-bottom:8px;">
+                Doorzoek alle geladen boeken op trefwoord, onderwerp of nummer.
+            </div>
+
+            <div class="search-box-container">
+
+                <input
+                    type="text"
+                    id="globalSearchInput"
+                    class="search-input"
+                    placeholder="Typ zoekterm..."
+                    onkeydown="if(event.key==='Enter') executeGlobalSearch()"
+                >
+
+                <button
+                    class="search-btn"
+                    onclick="executeGlobalSearch()">
+                    Zoek
+                </button>
+
+            </div>
+
+            <div
+                id="searchResultsContainer"
+                style="flex:1;overflow-y:auto;">
+
+                <i>
+                    Voer een zoekterm in om te zoeken.
+                </i>
+
+            </div>
+
+        </div>
+
+
+        <!-- TROUBLESHOOT -->
+
+        <div
+            id="tabTroubleshoot"
+            class="tab-content">
+
+            <div
+                style="font-weight:bold;margin-bottom:4px;color:#071930;">
+                TROUBLESHOOT
+            </div>
+
+            <div
+                style="color:#64748b;font-size:0.68rem;margin-bottom:8px;">
+                Zoek foutmeldingen, waarschuwingen of ATA-hoofdstukken in de geladen manuals.
+            </div>
+
+            <div class="search-box-container">
+
+                <input
+                    type="text"
+                    id="troubleshootInput"
+                    class="search-input"
+                    placeholder="Bijv. HYD LOW PRESS of ATA 29"
+                    onkeydown="if(event.key==='Enter') runTroubleshoot()"
+                >
+
+                <button
+                    class="search-btn"
+                    onclick="runTroubleshoot()">
+                    Zoek
+                </button>
+
+            </div>
+
+            <div
+                id="troubleshootResults"
+                style="flex:1;overflow-y:auto;">
+
+                <i>
+                    Zoek een foutmelding of ATA-hoofdstuk.
+                </i>
+
+            </div>
+
+            <div
+                style="color:#64748b;font-size:0.65rem;margin-top:10px;">
+                Resultaten zijn zoekmatches, geen automatisch goedgekeurde onderhoudsprocedures.
+                Controleer altijd de toepasselijke goedgekeurde manual.
+            </div>
+
+        </div>
+
+
+        <!-- UPLOAD -->
+
+        <div class="upload-section">
+
+            <label id="uploadLabel">
+                Manuals voor Falcon (max. 4):
+            </label>
+
+            <input
+                type="file"
+                id="pdfUpload"
+                accept=".pdf"
+                multiple
+                onchange="processMultipleManuals(event)"
+            >
+
+            <div
+                id="progressBarContainer"
+                class="progress-bar-container">
+
+                <div
+                    id="progressBarFill"
+                    class="progress-bar-fill">
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- VIEWER -->
+
+    <div class="viewer-pane">
+
+        <div
+            class="viewer-toolbar"
+            id="viewerToolbar"
+            style="display:none;">
+
+            <div class="page-controls">
+
+                <button
+                    class="btn-action"
+                    onclick="prevPage()">
+                    Vorige
+                </button>
+
+                <span id="pageIndicator">
+                    Pagina 1 / 1
+                </span>
+
+                <button
+                    class="btn-action"
+                    onclick="nextPage()">
+                    Volgende
+                </button>
+
+            </div>
+
+            <div
+                style="color:#64748b;"
+                id="viewerStatus">
+                Gereed
+            </div>
+
+        </div>
+
+
+        <div
+            class="pdf-canvas-container"
+            id="pdfContainerWrapper">
+
+            <canvas id="pdfCanvas"></canvas>
+
+        </div>
+
+
+        <div id="ataOverviewContainer">
+
+            <h2>
+                Volledig Overzicht ATA Chapters
+            </h2>
+
+            <table class="ata-table">
+
+                <thead>
+
+                    <tr>
+                        <th>Chap.</th>
+                        <th>Subject</th>
+                        <th>Chap.</th>
+                        <th>Subject</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    <tr><td>00</td><td>Air Vehicle General</td><td>51</td><td>Standard Practices – Structures</td></tr>
+                    <tr><td>04</td><td>Airworthiness Limitations</td><td>52</td><td>Doors</td></tr>
+                    <tr><td>05</td><td>Time Limits/Maintenance Checks</td><td>53</td><td>Fuselage</td></tr>
+                    <tr><td>06</td><td>Dimensions and Areas</td><td>54</td><td>Nacelles and Pylons</td></tr>
+                    <tr><td>07</td><td>Lifting, Shoring, Recovering and Transporting</td><td>55</td><td>Stabilizers</td></tr>
+                    <tr><td>08</td><td>Levelling and Weighing</td><td>56</td><td>Windows and Canopies</td></tr>
+                    <tr><td>09</td><td>Handling and Taxiing</td><td>57</td><td>Wings</td></tr>
+                    <tr><td>10</td><td>Parking and Mooring</td><td>60</td><td>Standard Practices – Propeller or Rotor</td></tr>
+                    <tr><td>11</td><td>Placards and Markings</td><td>61</td><td>Propellers and Propulsors</td></tr>
+                    <tr><td>12</td><td>Servicing</td><td>62</td><td>Main Rotors</td></tr>
+                    <tr><td>14</td><td>Air Vehicle Loading and Offloading</td><td>63</td><td>Main Rotor Drives</td></tr>
+                    <tr><td>15</td><td>Aircrew Information</td><td>64</td><td>Tail Rotor</td></tr>
+                    <tr><td>16</td><td>Change of Role</td><td>65</td><td>Tail Rotor Drive</td></tr>
+                    <tr><td>18</td><td>Vibration and Noise Analysis and Attenuation</td><td>66</td><td>Folding Blades and Pylon</td></tr>
+                    <tr><td>20</td><td>Standard Practices – Airframe Systems</td><td>67</td><td>Rotors Flight Control</td></tr>
+                    <tr><td>21</td><td>Environmental Control</td><td>70</td><td>Standard Practices – Engine</td></tr>
+                    <tr><td>22</td><td>Auto Flight</td><td>71</td><td>Power Plant</td></tr>
+                    <tr><td>23</td><td>Communications</td><td>72</td><td>Engine</td></tr>
+                    <tr><td>24</td><td>Electrical Power</td><td>73</td><td>Engine Fuel and Control</td></tr>
+                    <tr><td>25</td><td>Equipment and Furnishings</td><td>74</td><td>Ignition</td></tr>
+                    <tr><td>26</td><td>Fire Protection</td><td>75</td><td>Air</td></tr>
+                    <tr><td>27</td><td>Flight Controls</td><td>76</td><td>Engine Controls</td></tr>
+                    <tr><td>28</td><td>Fuel</td><td>77</td><td>Engine Indicating</td></tr>
+                    <tr><td>29</td><td>Hydraulic Power</td><td>78</td><td>Exhaust</td></tr>
+                    <tr><td>30</td><td>Ice and Rain Protection</td><td>79</td><td>Oil</td></tr>
+                    <tr><td>31</td><td>Indicating and Recording Systems</td><td>80</td><td>Starting</td></tr>
+                    <tr><td>32</td><td>Landing Gear</td><td>81</td><td>Turbines</td></tr>
+                    <tr><td>33</td><td>Lights</td><td>82</td><td>Water Injection</td></tr>
+                    <tr><td>34</td><td>Navigation</td><td>83</td><td>Accessory Gearboxes</td></tr>
+                    <tr><td>35</td><td>Oxygen</td><td>84</td><td>Propulsion Augmentation</td></tr>
+                    <tr><td>36</td><td>Pneumatic</td><td>91</td><td>Charts and Diagrams</td></tr>
+                    <tr><td>37</td><td>Vacuum</td><td>93</td><td>Surveillance</td></tr>
+                    <tr><td>38</td><td>Water and Waste</td><td>94</td><td>Weapons Systems</td></tr>
+                    <tr><td>41</td><td>Water Ballast</td><td>95</td><td>Crew Escape and Safety</td></tr>
+                    <tr><td>43</td><td>Tactical Communications</td><td>96</td><td>Missiles, Drones and Telemetry</td></tr>
+                    <tr><td>45</td><td>Central Maintenance System (CMS)</td><td>97</td><td>Image Recording</td></tr>
+                    <tr><td>46</td><td>Systems Integration and Display</td><td>98</td><td>Meteorological and Atmospheric Research</td></tr>
+                    <tr><td>47</td><td>Liquid Nitrogen</td><td></td><td></td></tr>
+                    <tr><td>48</td><td>In-Flight Refuelling Tanker</td><td></td><td></td></tr>
+                    <tr><td>49</td><td>Airborne Auxiliary Power</td><td></td><td></td></tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    /* ============================================================
+       AERONEX
+       ATA MANUAL VIEWER
+       ============================================================ */
+
+
+    const CORRECT_ACCESS_CODE = "Vti2026";
+
+
+    /* ============================================================
+       DATA
+       ============================================================ */
+
+    let aircraftProfiles = [
+        {
+            id: 1,
+            name: 'Falcon',
+            books: []
+        }
+    ];
+
+    let selectedAircraftIndex = 0;
+
+    let loadedBooks =
+        aircraftProfiles[0].books;
+
+    let currentBookIndex = 0;
+
+    let activePageNum = 1;
+
+    let renderScale = 1.3;
+
+    let canvasElement =
+        document.getElementById('pdfCanvas');
+
+    let canvasContext =
+        canvasElement.getContext('2d');
+
+    let isShowingAtaOverview = false;
+
+
+    /* ============================================================
+       ATA CHAPTER NAMEN
+       ============================================================ */
+
+    const ATA_CHAPTER_NAMES = {
+
+        '00': 'Air Vehicle General',
+        '04': 'Airworthiness Limitations',
+        '05': 'Time Limits/Maintenance Checks',
+        '06': 'Dimensions and Areas',
+        '07': 'Lifting, Shoring, Recovering and Transporting',
+        '08': 'Levelling and Weighing',
+        '09': 'Handling and Taxiing',
+        '10': 'Parking and Mooring',
+        '11': 'Placards and Markings',
+        '12': 'Servicing',
+        '14': 'Air Vehicle Loading and Offloading',
+        '15': 'Aircrew Information',
+        '16': 'Change of Role',
+        '18': 'Vibration and Noise Analysis and Attenuation',
+        '20': 'Standard Practices – Airframe Systems',
+        '21': 'Environmental Control',
+        '22': 'Auto Flight',
+        '23': 'Communications',
+        '24': 'Electrical Power',
+        '25': 'Equipment and Furnishings',
+        '26': 'Fire Protection',
+        '27': 'Flight Controls',
+        '28': 'Fuel',
+        '29': 'Hydraulic Power',
+        '30': 'Ice and Rain Protection',
+        '31': 'Indicating and Recording Systems',
+        '32': 'Landing Gear',
+        '33': 'Lights',
+        '34': 'Navigation',
+        '35': 'Oxygen',
+        '36': 'Pneumatic',
+        '37': 'Vacuum',
+        '38': 'Water and Waste',
+        '39': 'Electrical — Panels / Components',
+        '40': 'Multisystem',
+        '41': 'Water Ballast',
+        '42': 'Integrated Modular Avionics',
+        '43': 'Tactical Communications',
+        '44': 'Cabin Systems',
+        '45': 'Central Maintenance System (CMS)',
+        '46': 'Systems Integration and Display',
+        '47': 'Liquid Nitrogen',
+        '48': 'In-Flight Refuelling Tanker',
+        '49': 'Airborne Auxiliary Power',
+        '51': 'Standard Practices – Structures',
+        '52': 'Doors',
+        '53': 'Fuselage',
+        '54': 'Nacelles and Pylons',
+        '55': 'Stabilizers',
+        '56': 'Windows and Canopies',
+        '57': 'Wings',
+        '60': 'Standard Practices – Propeller or Rotor',
+        '61': 'Propellers and Propulsors',
+        '62': 'Main Rotors',
+        '63': 'Main Rotor Drives',
+        '64': 'Tail Rotor',
+        '65': 'Tail Rotor Drive',
+        '66': 'Folding Blades and Pylon',
+        '67': 'Rotors Flight Control',
+        '70': 'Standard Practices – Engine',
+        '71': 'Power Plant',
+        '72': 'Engine',
+        '73': 'Engine Fuel and Control',
+        '74': 'Ignition',
+        '75': 'Air',
+        '76': 'Engine Controls',
+        '77': 'Engine Indicating',
+        '78': 'Exhaust',
+        '79': 'Oil',
+        '80': 'Starting',
+        '81': 'Turbines',
+        '82': 'Water Injection',
+        '83': 'Accessory Gearboxes',
+        '84': 'Propulsion Augmentation',
+        '91': 'Charts and Diagrams',
+        '93': 'Surveillance',
+        '94': 'Weapons Systems',
+        '95': 'Crew Escape and Safety',
+        '96': 'Missiles, Drones and Telemetry',
+        '97': 'Image Recording',
+        '98': 'Meteorological and Atmospheric Research'
+
+    };
+
+
+    function getAtaChapterName(chapter) {
+
+        return ATA_CHAPTER_NAMES[
+            String(chapter).padStart(2, '0')
+        ] || 'Unknown / Other';
+
+    }
+
+
+    /* ============================================================
+       CURRENT AIRCRAFT
+       ============================================================ */
+
+    function getCurrentAircraft() {
+
+        return aircraftProfiles[
+            selectedAircraftIndex
+        ];
+
+    }
+
+
+    /* ============================================================
+       ACCESS CODE
+       ============================================================ */
+
+    function checkAccessCode() {
+
+        const inputVal =
+            document.getElementById(
+                'accessCodeInput'
+            ).value;
+
+        const errorMsg =
+            document.getElementById(
+                'codeErrorMsg'
+            );
+
+        if (inputVal === CORRECT_ACCESS_CODE) {
+
+            document.getElementById(
+                'welcomeOverlay'
+            ).style.display = 'none';
+
+        } else {
+
+            errorMsg.style.display = 'block';
+
+            document.getElementById(
+                'accessCodeInput'
+            ).value = '';
+
+            document.getElementById(
+                'accessCodeInput'
+            ).focus();
+
         }
 
-        function checkAccessCode() {
-            const inputVal = document.getElementById('accessCodeInput').value;
-            const errorMsg = document.getElementById('codeErrorMsg');
+    }
 
-            if (inputVal === CORRECT_ACCESS_CODE) {
-                document.getElementById('welcomeOverlay').style.display = 'none';
-            } else {
-                errorMsg.style.display = 'block';
-                document.getElementById('accessCodeInput').value = '';
-                document.getElementById('accessCodeInput').focus();
-            }
-        }
 
-        function refreshAircraftUI() {
-            const select = document.getElementById('aircraftSelect');
-            const current = getCurrentAircraft();
-            select.innerHTML = aircraftProfiles.map((aircraft, index) =>
-                `<option value="${index}">${escapeHtml(aircraft.name)}</option>`
-            ).join('');
-            select.value = String(selectedAircraftIndex);
-            document.getElementById('selectedAircraftName').innerText = current.name;
-            document.getElementById('uploadLabel').innerText = `Manuals voor ${current.name} (max. 4):`;
-            document.getElementById('loadedBooksCount').innerText = `${current.books.length} / 4 boeken geladen`;
-            document.getElementById('headerInfoText').innerText = current.books.length
-                ? `${current.name.toUpperCase()} — ${current.books.map(b => b.name).join(', ')}`
-                : `${current.name.toUpperCase()} — GEEN MANUALS GELADEN`;
-        }
+    /* ============================================================
+       HTML ESCAPE
+       ============================================================ */
 
-        function addAircraft() {
-            const name = prompt('Naam van het vliegtuig:', `Falcon ${aircraftProfiles.length + 1}`);
-            if (!name || !name.trim()) return;
+    function escapeHtml(value) {
 
-            aircraftProfiles.push({
-                id: Date.now(),
-                name: name.trim(),
-                books: []
-            });
-            selectedAircraftIndex = aircraftProfiles.length - 1;
-            loadedBooks = getCurrentAircraft().books;
-            currentBookIndex = 0;
-            activePageNum = 1;
-            refreshAircraftUI();
-            rebuildCurrentAircraftTree();
-            clearViewer();
-        }
+        return String(value || '')
+            .replace(/[&<>'"]/g, ch => ({
 
-        function selectAircraft(index) {
-            const newIndex = Number(index);
-            if (!Number.isInteger(newIndex) || !aircraftProfiles[newIndex]) return;
-
-            selectedAircraftIndex = newIndex;
-            loadedBooks = getCurrentAircraft().books;
-            currentBookIndex = 0;
-            activePageNum = 1;
-            refreshAircraftUI();
-            rebuildCurrentAircraftTree();
-
-            if (loadedBooks.length) {
-                document.getElementById('viewerToolbar').style.display = 'flex';
-                renderSelectedPage(0, 1);
-                document.getElementById('viewerStatus').innerText = `Actief vliegtuig: ${getCurrentAircraft().name}`;
-            } else {
-                clearViewer();
-            }
-        }
-
-        function clearViewer() {
-            isShowingAtaOverview = false;
-            document.getElementById('ataOverviewContainer').style.display = 'none';
-            canvasElement.width = 1;
-            canvasElement.height = 1;
-            canvasElement.style.width = '1px';
-            canvasElement.style.height = '1px';
-            canvasContext.clearRect(0, 0, 1, 1);
-            document.getElementById('viewerToolbar').style.display = 'none';
-            document.getElementById('pageIndicator').innerText = 'Pagina 1 / 1';
-            document.getElementById('viewerStatus').innerText = 'Geen manual geladen';
-        }
-
-        function rebuildCurrentAircraftTree() {
-            const globalChapters = {};
-            loadedBooks.forEach(book => {
-                book.pages.forEach(page => {
-                    if (!globalChapters[page.chapter]) globalChapters[page.chapter] = [];
-                    globalChapters[page.chapter].push(page);
-                });
-            });
-            buildTreeUI(globalChapters);
-        }
-
-        function switchTab(tabName, tabElement) {
-            document.querySelectorAll('.b-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            tabElement.classList.add('active');
-
-            if (tabName === 'browse') {
-                document.getElementById('tabBrowse').classList.add('active');
-            } else if (tabName === 'search') {
-                document.getElementById('tabSearch').classList.add('active');
-                setTimeout(() => document.getElementById('globalSearchInput').focus(), 0);
-            } else if (tabName === 'troubleshoot') {
-                document.getElementById('tabTroubleshoot').classList.add('active');
-                setTimeout(() => document.getElementById('troubleshootInput').focus(), 0);
-            }
-        }
-
-        function toggleNode(element) {
-            const parent = element.parentElement;
-            parent.classList.toggle('open');
-            const symbol = element.querySelector('.toggle-symbol');
-            if (symbol) symbol.innerText = parent.classList.contains('open') ? '▼' : '>';
-        }
-
-        window.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
-                e.preventDefault();
-                const searchTabBtn = document.querySelectorAll('.b-tab')[1];
-                switchTab('search', searchTabBtn);
-            }
-        });
-
-        function normalizeText(value) {
-            return String(value || '')
-                .normalize('NFKC')
-                .replace(/[\u2010-\u2015\u2212]/g, '-')
-                .replace(/[\u00A0\u2007\u202F]/g, ' ')
-                .replace(/\s*-\s*/g, '-')
-                .replace(/\s+/g, ' ')
-                .trim()
-                .toLowerCase();
-        }
-
-        function escapeHtml(value) {
-            return String(value || '').replace(/[&<>'"]/g, ch => ({
                 '&': '&amp;',
                 '<': '&lt;',
                 '>': '&gt;',
                 "'": '&#39;',
                 '"': '&quot;'
+
             }[ch]));
+
+    }
+
+
+    /* ============================================================
+       TEXT NORMALIZATION
+       ============================================================ */
+
+    function normalizeText(value) {
+
+        return String(value || '')
+            .normalize('NFKC')
+            .replace(/[\u2010-\u2015\u2212]/g, '-')
+            .replace(/[\u00A0\u2007\u202F]/g, ' ')
+            .replace(/\s*-\s*/g, '-')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .toLowerCase();
+
+    }
+
+
+    /* ============================================================
+       REFRESH UI
+       ============================================================ */
+
+    function refreshAircraftUI() {
+
+        const select =
+            document.getElementById(
+                'aircraftSelect'
+            );
+
+        const current =
+            getCurrentAircraft();
+
+        select.innerHTML =
+            aircraftProfiles
+                .map((aircraft, index) =>
+                    `<option value="${index}">
+                        ${escapeHtml(aircraft.name)}
+                    </option>`
+                )
+                .join('');
+
+        select.value =
+            String(selectedAircraftIndex);
+
+        document.getElementById(
+            'selectedAircraftName'
+        ).innerText = current.name;
+
+        document.getElementById(
+            'uploadLabel'
+        ).innerText =
+            `Manuals voor ${current.name} (max. 4):`;
+
+        document.getElementById(
+            'loadedBooksCount'
+        ).innerText =
+            `${current.books.length} / 4 boeken geladen`;
+
+        document.getElementById(
+            'headerInfoText'
+        ).innerText =
+            current.books.length
+                ? `${current.name.toUpperCase()} — ${
+                    current.books.map(b => b.name).join(', ')
+                }`
+                : `${current.name.toUpperCase()} — GEEN MANUALS GELADEN`;
+
+    }
+
+
+    /* ============================================================
+       AIRCRAFT
+       ============================================================ */
+
+    function addAircraft() {
+
+        const name = prompt(
+            'Naam van het vliegtuig:',
+            `Falcon ${aircraftProfiles.length + 1}`
+        );
+
+        if (!name || !name.trim()) {
+            return;
         }
 
-        const ATA_CHAPTER_NAMES = {
-            '00': 'Air Vehicle General',
-            '04': 'Airworthiness Limitations',
-            '05': 'Time Limits/Maintenance Checks',
-            '06': 'Dimensions and Areas',
-            '07': 'Lifting, Shoring, Recovering and Transporting',
-            '08': 'Levelling and Weighing',
-            '09': 'Handling and Taxiing',
-            '10': 'Parking and Mooring',
-            '11': 'Placards and Markings',
-            '12': 'Servicing',
-            '14': 'Air Vehicle Loading and Offloading',
-            '15': 'Aircrew Information',
-            '16': 'Change of Role',
-            '18': 'Vibration and Noise Analysis and Attenuation',
-            '20': 'Standard Practices — Airframe Systems',
-            '21': 'Environmental Control',
-            '22': 'Auto Flight',
-            '23': 'Communications',
-            '24': 'Electrical Power',
-            '25': 'Equipment and Furnishings',
-            '26': 'Fire Protection',
-            '27': 'Flight Controls',
-            '28': 'Fuel',
-            '29': 'Hydraulic Power',
-            '30': 'Ice and Rain Protection',
-            '31': 'Indicating and Recording Systems',
-            '32': 'Landing Gear',
-            '33': 'Lights',
-            '34': 'Navigation',
-            '35': 'Oxygen',
-            '36': 'Pneumatic',
-            '37': 'Vacuum',
-            '38': 'Water and Waste',
-            '39': 'Electrical — Panels / Components',
-            '40': 'Multisystem',
-            '41': 'Water Ballast',
-            '42': 'Integrated Modular Avionics',
-            '43': 'Tactical Communications',
-            '44': 'Cabin Systems',
-            '45': 'Central Maintenance System (CMS)',
-            '46': 'Systems Integration and Display',
-            '47': 'Liquid Nitrogen',
-            '48': 'In-Flight Refuelling Tanker',
-            '49': 'Airborne Auxiliary Power',
-            '51': 'Standard Practices – Structures',
-            '52': 'Doors',
-            '53': 'Fuselage',
-            '54': 'Nacelles and Pylons',
-            '55': 'Stabilizers',
-            '56': 'Windows and Canopies',
-            '57': 'Wings',
-            '60': 'Standard Practices – Propeller or Rotor',
-            '61': 'Propellers and Propulsors',
-            '62': 'Main Rotors',
-            '63': 'Main Rotor Drives',
-            '64': 'Tail Rotor',
-            '65': 'Tail Rotor Drive',
-            '66': 'Folding Blades and Pylon',
-            '67': 'Rotors Flight Control',
-            '70': 'Standard Practices – Engine',
-            '71': 'Power Plant',
-            '72': 'Engine',
-            '73': 'Engine Fuel and Control',
-            '74': 'Ignition',
-            '75': 'Air',
-            '76': 'Engine Controls',
-            '77': 'Engine Indicating',
-            '78': 'Exhaust',
-            '79': 'Oil',
-            '80': 'Starting',
-            '81': 'Turbines',
-            '82': 'Water Injection',
-            '83': 'Accessory Gearboxes',
-            '84': 'Propulsion Augmentation',
-            '91': 'Charts and Diagrams',
-            '93': 'Surveillance',
-            '94': 'Weapons Systems',
-            '95': 'Crew Escape and Safety',
-            '96': 'Missiles, Drones and Telemetry',
-            '97': 'Image Recording',
-            '98': 'Meteorological and Atmospheric Research'
+        aircraftProfiles.push({
+
+            id: Date.now(),
+
+            name: name.trim(),
+
+            books: []
+
+        });
+
+        selectedAircraftIndex =
+            aircraftProfiles.length - 1;
+
+        loadedBooks =
+            getCurrentAircraft().books;
+
+        currentBookIndex = 0;
+
+        activePageNum = 1;
+
+        refreshAircraftUI();
+
+        rebuildCurrentAircraftTree();
+
+        clearViewer();
+
+    }
+
+
+    function selectAircraft(index) {
+
+        const newIndex = Number(index);
+
+        if (
+            !Number.isInteger(newIndex) ||
+            !aircraftProfiles[newIndex]
+        ) {
+            return;
+        }
+
+        selectedAircraftIndex = newIndex;
+
+        loadedBooks =
+            getCurrentAircraft().books;
+
+        currentBookIndex = 0;
+
+        activePageNum = 1;
+
+        refreshAircraftUI();
+
+        rebuildCurrentAircraftTree();
+
+        if (loadedBooks.length) {
+
+            document.getElementById(
+                'viewerToolbar'
+            ).style.display = 'flex';
+
+            renderSelectedPage(0, 1);
+
+            document.getElementById(
+                'viewerStatus'
+            ).innerText =
+                `Actief vliegtuig: ${
+                    getCurrentAircraft().name
+                }`;
+
+        } else {
+
+            clearViewer();
+
+        }
+
+    }
+
+
+    /* ============================================================
+       CLEAR VIEWER
+       ============================================================ */
+
+    function clearViewer() {
+
+        isShowingAtaOverview = false;
+
+        document.getElementById(
+            'ataOverviewContainer'
+        ).style.display = 'none';
+
+        document.getElementById(
+            'pdfContainerWrapper'
+        ).style.display = 'flex';
+
+        canvasElement.width = 1;
+
+        canvasElement.height = 1;
+
+        canvasElement.style.width = '1px';
+
+        canvasElement.style.height = '1px';
+
+        canvasContext.clearRect(
+            0,
+            0,
+            1,
+            1
+        );
+
+        document.getElementById(
+            'viewerToolbar'
+        ).style.display = 'none';
+
+        document.getElementById(
+            'pageIndicator'
+        ).innerText = 'Pagina 1 / 1';
+
+        document.getElementById(
+            'viewerStatus'
+        ).innerText =
+            'Geen manual geladen';
+
+    }
+
+
+    /* ============================================================
+       TAB SYSTEM
+       ============================================================ */
+
+    function switchTab(tabName, tabElement) {
+
+        document
+            .querySelectorAll('.b-tab')
+            .forEach(t =>
+                t.classList.remove('active')
+            );
+
+        document
+            .querySelectorAll('.tab-content')
+            .forEach(c =>
+                c.classList.remove('active')
+            );
+
+        tabElement.classList.add('active');
+
+        if (tabName === 'browse') {
+
+            document
+                .getElementById('tabBrowse')
+                .classList.add('active');
+
+        }
+
+        if (tabName === 'search') {
+
+            document
+                .getElementById('tabSearch')
+                .classList.add('active');
+
+            setTimeout(() => {
+
+                document
+                    .getElementById('globalSearchInput')
+                    .focus();
+
+            }, 0);
+
+        }
+
+        if (tabName === 'troubleshoot') {
+
+            document
+                .getElementById('tabTroubleshoot')
+                .classList.add('active');
+
+            setTimeout(() => {
+
+                document
+                    .getElementById('troubleshootInput')
+                    .focus();
+
+            }, 0);
+
+        }
+
+    }
+
+
+    /* ============================================================
+       TREE
+       ============================================================ */
+
+    function toggleNode(element) {
+
+        const parent =
+            element.parentElement;
+
+        parent.classList.toggle('open');
+
+        const symbol =
+            element.querySelector(
+                '.toggle-symbol'
+            );
+
+        if (symbol) {
+
+            symbol.innerText =
+                parent.classList.contains('open')
+                    ? '▼'
+                    : '>';
+
+        }
+
+    }
+
+
+    /* ============================================================
+       CTRL + F
+       ============================================================ */
+
+    window.addEventListener(
+        'keydown',
+        function(e) {
+
+            if (
+                (e.ctrlKey || e.metaKey) &&
+                e.key.toLowerCase() === 'f'
+            ) {
+
+                e.preventDefault();
+
+                const searchTabBtn =
+                    document.querySelectorAll(
+                        '.b-tab'
+                    )[1];
+
+                switchTab(
+                    'search',
+                    searchTabBtn
+                );
+
+            }
+
+        }
+    );
+
+
+    /* ============================================================
+       ATA PARSER
+       ============================================================ */
+
+    function extractAtaInfo(items) {
+
+        const allItems = items || [];
+
+        /*
+         * PDF.js splitst tekst vaak op in verschillende items.
+         *
+         * Voorbeeld:
+         *
+         * 21
+         * -
+         * 32
+         * -
+         * 50
+         *
+         * Daarom maken we eerst regels.
+         */
+
+        const lines = {};
+
+        allItems.forEach(item => {
+
+            const text =
+                normalizeText(item.str || '');
+
+            if (!text) {
+                return;
+            }
+
+            const y =
+                Math.round(
+                    Number(item.y) || 0
+                );
+
+            if (!lines[y]) {
+                lines[y] = [];
+            }
+
+            lines[y].push({
+
+                text: text,
+
+                x:
+                    Number(item.x) || 0
+
+            });
+
+        });
+
+
+        /*
+         * Items op dezelfde Y-positie combineren.
+         */
+
+        const combinedLines =
+            Object.keys(lines)
+                .map(y => {
+
+                    const lineItems =
+                        lines[y].sort(
+                            (a, b) =>
+                                a.x - b.x
+                        );
+
+                    return {
+
+                        text:
+                            lineItems
+                                .map(x => x.text)
+                                .join(' '),
+
+                        y: Number(y),
+
+                        x:
+                            lineItems.length
+                                ? lineItems[0].x
+                                : 0
+
+                    };
+
+                });
+
+
+        const candidates = [];
+
+
+        /*
+         * Zoek klassieke ATA codes.
+         *
+         * 21-32
+         * 21-32-50
+         * 21-32-50-01
+         */
+
+        for (const line of combinedLines) {
+
+            const text =
+                normalizeText(line.text);
+
+            if (!text) {
+                continue;
+            }
+
+
+            const codeRegex =
+                /\b(\d{2}(?:\s*-\s*\d{2}){1,3})\b/g;
+
+            let match;
+
+
+            while (
+                (match = codeRegex.exec(text)) !== null
+            ) {
+
+                const code =
+                    match[1]
+                        .replace(/\s+/g, '');
+
+                const parts =
+                    code.split('-');
+
+                const chapter =
+                    parts[0];
+
+
+                if (
+                    !/^\d{2}$/.test(chapter)
+                ) {
+                    continue;
+                }
+
+
+                candidates.push({
+
+                    code: code,
+
+                    chapter: chapter,
+
+                    y: line.y,
+
+                    x: line.x,
+
+                    priority: 150
+
+                });
+
+            }
+
+
+            /*
+             * Zoek:
+             *
+             * ATA 21
+             * ATA21
+             * CHAPTER 21
+             * CHAPTER 21-32-50
+             */
+
+            const ataRegex =
+                /\b(?:ata|chapter)\s*(\d{2})(?:\s*-\s*\d{2}(?:\s*-\s*\d{2})?)?\b/gi;
+
+
+            while (
+                (match = ataRegex.exec(text)) !== null
+            ) {
+
+                const chapter =
+                    match[1];
+
+                candidates.push({
+
+                    code:
+                        chapter + '-00',
+
+                    chapter: chapter,
+
+                    y: line.y,
+
+                    x: line.x,
+
+                    priority: 220
+
+                });
+
+            }
+
+        }
+
+
+        /*
+         * Maak ook volledige pagin tekst.
+         */
+
+        const fullPageText =
+            combinedLines
+                .sort(
+                    (a, b) =>
+                        b.y - a.y ||
+                        a.x - b.x
+                )
+                .map(line => line.text)
+                .join(' ');
+
+
+        /*
+         * Extra controle over volledige pagina.
+         */
+
+        const fullAtaRegex =
+            /\b(?:ata|chapter)\s*(\d{2})(?:\s*-\s*\d{2}(?:\s*-\s*\d{2})?)?\b/gi;
+
+        let fullMatch;
+
+
+        while (
+            (fullMatch =
+                fullAtaRegex.exec(
+                    fullPageText
+                )) !== null
+        ) {
+
+            const chapter =
+                fullMatch[1];
+
+            candidates.push({
+
+                code:
+                    chapter + '-00',
+
+                chapter: chapter,
+
+                y: 999999,
+
+                x: 0,
+
+                priority: 250
+
+            });
+
+        }
+
+
+        /*
+         * Geen ATA gevonden.
+         */
+
+        if (!candidates.length) {
+
+            return {
+
+                chapter: '00',
+
+                sectionCode: '00-00'
+
+            };
+
+        }
+
+
+        /*
+         * Beste kandidaat kiezen.
+         */
+
+        candidates.sort(
+            (a, b) => {
+
+                if (
+                    b.priority !==
+                    a.priority
+                ) {
+
+                    return (
+                        b.priority -
+                        a.priority
+                    );
+
+                }
+
+                if (
+                    b.y !== a.y
+                ) {
+
+                    return (
+                        b.y -
+                        a.y
+                    );
+
+                }
+
+                return (
+                    a.x -
+                    b.x
+                );
+
+            }
+        );
+
+
+        const best =
+            candidates[0];
+
+
+        return {
+
+            chapter:
+                best.chapter,
+
+            sectionCode:
+                best.code
+
         };
 
-        function getAtaChapterName(chapter) {
-            return ATA_CHAPTER_NAMES[String(chapter).padStart(2, '0')] || 'Chapter';
-        }
+    }
 
-        // NAUWKEURIGE ATA PARSER OP BASIS VAN HET EERSTE GETAL (bijv. "21" uit "21-32-50")
-        function extractAtaInfo(items) {
-            const candidates = [];
-            const allItems = items || [];
 
-            for (const item of allItems) {
-                const raw = String(item.str || '');
-                const text = normalizeText(raw);
-                if (!text) continue;
+    /* ============================================================
+       PAGE LABEL
+       ============================================================ */
 
-                // Match patronen zoals 21-32-50 of 21-32
-                const codeRegex = /(?:^|[^0-9])(\d{2}(?:\s*-\s*\d{2}){1,3})(?=$|[^0-9])/g;
-                let match;
-                while ((match = codeRegex.exec(text)) !== null) {
-                    const code = match[1].replace(/\s+/g, '');
-                    const parts = code.split('-');
-                    const chapter = parts[0]; // Het EERSTE getal is het ATA-hoofdstuk
-                    
-                    candidates.push({
-                        code: code,
-                        chapter: chapter,
-                        y: Number(item.y) || 0,
-                        x: Number(item.x) || 0,
-                        priority: 150
-                    });
-                }
+    function getPageLabel(
+        fullText,
+        pageIndex
+    ) {
 
-                // Match patronen zoals "ata 21" of "chapter 21"
-                const ataRegex = /\b(?:ata|chapter)\s*(\d{2})\b/gi;
-                while ((match = ataRegex.exec(text)) !== null) {
-                    const ch = match[1];
-                    candidates.push({
-                        code: ch + '-00',
-                        chapter: ch,
-                        y: Number(item.y) || 0,
-                        x: Number(item.x) || 0,
-                        priority: 100
-                    });
-                }
-            }
+        const normal =
+            normalizeText(fullText);
 
-            if (!candidates.length) {
-                return { chapter: '00', sectionCode: '00-00' };
-            }
+        const match =
+            normal.match(
+                /\bpage\s+([a-z0-9]+)(?:\s+(?:of|de)\s+[a-z0-9]+)?\b/i
+            );
 
-            // Sorteer kandidaten: prioriteit en positie
-            candidates.sort((a, b) => {
-                return b.priority - a.priority || b.y - a.y || a.x - b.x;
-            });
+        return match
+            ? `p.${match[1]}`
+            : `p.${pageIndex}`;
 
-            const best = candidates[0];
-            return {
-                chapter: best.chapter,
-                sectionCode: best.code
-            };
-        }
+    }
 
-        function getPageLabel(fullText, pageIndex) {
-            const normal = normalizeText(fullText);
-            const match = normal.match(/\bpage\s+([a-z0-9]+)(?:\s+(?:of|de)\s+[a-z0-9]+)?\b/i);
-            return match ? `p.${match[1]}` : `p.${pageIndex}`;
-        }
 
-        function findUnderlinedSubject(pdfPage, items) {
-            const source = (items || []).map((item, index) => {
-                const raw = String(item.str || '').trim().replace(/\s+/g, ' ');
-                const letters = raw.replace(/[^A-Za-z]/g, '');
-                const upper = raw.replace(/[^A-Z]/g, '');
-                return {
-                    raw,
-                    x: Number(item.x) || 0,
-                    y: Number(item.y) || 0,
-                    index,
-                    letterCount: letters.length,
-                    uppercaseRatio: letters.length ? upper.length / letters.length : 0
-                };
-            }).filter(x => x.raw.length >= 4 && x.raw.length <= 100);
+    /* ============================================================
+       SUBJECT DETECTION
+       ============================================================ */
 
-            const bad = /^(maintenance( manual)?|manual|general|description|operation|procedure|inspection|check|test|page|chapter|contents|table of contents|dassault|airbus|effectivity|applicability|introduction)$/i;
-            const headingWords = /\b(system|power|control|unit|valve|pump|switch|indicator|display|circuit|generator|battery|sensor|actuator|landing|gear|brake|wheel|door|window|engine|fuel|hydraulic|pneumatic|oxygen|fire|protection|lighting|navigation|communication|radar)\b/i;
+    function findUnderlinedSubject(
+        pdfPage,
+        items
+    ) {
 
-            const candidates = source.filter(item => {
-                if (bad.test(item.raw)) return false;
-                if (/^\d+(?:[ .-]\d+)*$/.test(item.raw)) return false;
-                if (/^\d{2}\s*-/.test(item.raw)) return false;
-                return item.letterCount >= 4;
-            }).map(item => {
-                let score = 0;
-                if (item.uppercaseRatio >= 0.85) score += 50;
-                if (headingWords.test(item.raw)) score += 40;
-                if (item.raw.length >= 6 && item.raw.length <= 50) score += 15;
-                return { ...item, score };
-            });
+        const source =
+            (items || [])
+                .map(
+                    (item, index) => {
 
-            candidates.sort((a, b) => b.score - a.score || b.y - a.y || a.index - b.index);
-            return candidates[0]?.raw || null;
-        }
+                        const raw =
+                            String(
+                                item.str || ''
+                            )
+                            .trim()
+                            .replace(
+                                /\s+/g,
+                                ' '
+                            );
 
-        function findSubject(pdfPage, items, fullText, sectionCode) {
-            const underlined = findUnderlinedSubject(pdfPage, items);
-            if (underlined) {
-                return underlined
-                    .toLowerCase()
-                    .replace(/\b\w/g, c => c.toUpperCase());
-            }
-            return 'General Information';
-        }
+                        const letters =
+                            raw.replace(
+                                /[^A-Za-z]/g,
+                                ''
+                            );
 
-        async function processMultipleManuals(event) {
-            const files = event.target.files;
-            if (!files || files.length === 0) return;
+                        const upper =
+                            raw.replace(
+                                /[^A-Z]/g,
+                                ''
+                            );
 
-            const currentAircraft = getCurrentAircraft();
-            if (currentAircraft.books.length + files.length > 4) {
-                alert('Je kunt maximaal 4 boeken per vliegtuig laden.');
-                event.target.value = '';
-                return;
-            }
+                        return {
 
-            const progressBarContainer = document.getElementById('progressBarContainer');
-            const progressBarFill = document.getElementById('progressBarFill');
-            progressBarContainer.style.display = 'block';
-            progressBarFill.style.width = '0%';
+                            raw,
 
-            let totalFiles = files.length;
-            let processedFilesCount = 0;
+                            x:
+                                Number(item.x) ||
+                                0,
 
-            for (let i = 0; i < totalFiles; i++) {
-                const file = files[i];
-                try {
-                    document.getElementById('viewerStatus').innerText = `Bezig met inlezen van "${file.name}"... (0%)`;
-                    
-                    const arrayBuffer = await file.arrayBuffer();
-                    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-                    const pdfDoc = await loadingTask.promise;
-                    
-                    const bookPages = [];
-                    const numPages = pdfDoc.numPages;
+                            y:
+                                Number(item.y) ||
+                                0,
 
-                    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-                        const pdfPage = await pdfDoc.getPage(pageNum);
-                        const textContent = await pdfPage.getTextContent();
-                        const textItems = textContent.items.map(item => ({
-                            str: item.str,
-                            x: item.transform[4],
-                            y: item.transform[5]
-                        }));
-                        const fullText = textItems.map(item => item.str).join(' ');
-                        const ataInfo = extractAtaInfo(textItems);
-                        const subject = findSubject(pdfPage, textItems, fullText, ataInfo.sectionCode);
-                        const pageLabel = getPageLabel(fullText, pageNum);
+                            index,
 
-                        bookPages.push({
-                            pageNum,
-                            chapter: ataInfo.chapter,
-                            sectionCode: ataInfo.sectionCode,
-                            subject,
-                            pageLabel,
-                            fullText
-                        });
+                            letterCount:
+                                letters.length,
 
-                        let filePercent = Math.round((pageNum / numPages) * 100);
-                        let totalOverallPercent = Math.round(((processedFilesCount + (pageNum / numPages)) / totalFiles) * 100);
-                        
-                        progressBarFill.style.width = totalOverallPercent + '%';
-                        document.getElementById('viewerStatus').innerText = `Verwerken: ${file.name} — ${filePercent}% (${pageNum}/${numPages} pag.) [${totalOverallPercent}% totaal]`;
+                            uppercaseRatio:
+                                letters.length
+                                    ? upper.length /
+                                      letters.length
+                                    : 0
+
+                        };
+
+                    }
+                )
+                .filter(
+                    x =>
+                        x.raw.length >= 4 &&
+                        x.raw.length <= 100
+                );
+
+
+        const bad =
+            /^(maintenance( manual)?|manual|general|description|operation|procedure|inspection|check|test|page|chapter|contents|table of contents|dassault|airbus|effectivity|applicability)$/i;
+
+
+        const headingWords =
+            /\b(system|power|control|unit|valve|pump|switch|indicator|display|circuit|generator|battery|sensor|actuator|landing|gear|brake|wheel|door|window|engine|fuel|hydraulic|pneumatic|oxygen|fire|protection|lighting|navigation|communication|radar)\b/i;
+
+
+        const candidates =
+            source
+                .filter(item => {
+
+                    if (
+                        bad.test(
+                            item.raw
+                        )
+                    ) {
+                        return false;
                     }
 
-                    currentAircraft.books.push({
-                        name: file.name,
-                        pdfDoc: pdfDoc,
-                        pages: bookPages
-                    });
+                    if (
+                        /^\d+(?:[ .-]\d+)*$/
+                            .test(item.raw)
+                    ) {
+                        return false;
+                    }
 
-                    processedFilesCount++;
-                } catch (err) {
-                    console.error('Fout bij verwerken PDF:', err);
-                    alert(`Fout bij verwerken van bestand ${file.name}: ${err.message}`);
-                }
-            }
+                    if (
+                        /^\d{2}\s*-/
+                            .test(item.raw)
+                    ) {
+                        return false;
+                    }
 
-            progressBarContainer.style.display = 'none';
-            progressBarFill.style.width = '0%';
+                    return (
+                        item.letterCount >= 4
+                    );
 
-            refreshAircraftUI();
-            rebuildCurrentAircraftTree();
+                })
+                .map(item => {
 
-            if (currentAircraft.books.length > 0) {
-                currentBookIndex = 0;
-                activePageNum = 1;
-                document.getElementById('viewerToolbar').style.display = 'flex';
-                renderSelectedPage(0, 1);
-            }
-            document.getElementById('viewerStatus').innerText = 'Gereed';
-            event.target.value = '';
-        }
+                    let score = 0;
 
-        function toggleAtaChaptersOverview() {
-            const currentAircraft = getCurrentAircraft();
-            isShowingAtaOverview = !isShowingAtaOverview;
+                    if (
+                        item.uppercaseRatio >= 0.85
+                    ) {
+                        score += 50;
+                    }
 
-            if (isShowingAtaOverview) {
-                document.getElementById('pdfContainerWrapper').style.display = 'none';
-                document.getElementById('ataOverviewContainer').style.display = 'block';
-                document.getElementById('viewerToolbar').style.display = 'none';
-                document.getElementById('viewerStatus').innerText = 'Overzicht: ATA Chapters';
-            } else {
-                document.getElementById('ataOverviewContainer').style.display = 'none';
-                document.getElementById('pdfContainerWrapper').style.display = 'flex';
-                if (currentAircraft.books.length > 0) {
-                    document.getElementById('viewerToolbar').style.display = 'flex';
-                    renderSelectedPage(currentBookIndex, activePageNum);
-                }
-            }
-        }
+                    if (
+                        headingWords.test(
+                            item.raw
+                        )
+                    ) {
+                        score += 40;
+                    }
 
-        function buildTreeUI(chapters) {
-            const container = document.getElementById('treeContainer');
-            container.innerHTML = '';
+                    if (
+                        item.raw.length >= 6 &&
+                        item.raw.length <= 50
+                    ) {
+                        score += 15;
+                    }
 
-            const sortedChapters = Object.keys(chapters).sort();
-            if (sortedChapters.length === 0) {
-                container.innerHTML = '<i>Nog geen boeken geladen. Gebruik hieronder de uploadknop.</i>';
-                return;
-            }
-
-            sortedChapters.forEach(ch => {
-                const chapterName = getAtaChapterName(ch);
-                const pages = chapters[ch];
-
-                const nodeDiv = document.createElement('div');
-                nodeDiv.className = 'tree-node';
-
-                const toggleDiv = document.createElement('div');
-                toggleDiv.className = 'tree-toggle';
-                toggleDiv.onclick = () => toggleNode(toggleDiv);
-                toggleDiv.innerHTML = `<span class="toggle-symbol">></span> <b>ATA ${ch}</b> — ${escapeHtml(chapterName)} (${pages.length})`;
-                nodeDiv.appendChild(toggleDiv);
-
-                const childrenUl = document.createElement('ul');
-                childrenUl.className = 'tree-children';
-
-                const sections = {};
-                pages.forEach(p => {
-                    if (!sections[p.sectionCode]) sections[p.sectionCode] = [];
-                    sections[p.sectionCode].push(p);
-                });
-
-                Object.keys(sections).sort().forEach(secCode => {
-                    const secPages = sections[secCode];
-                    const leafDiv = document.createElement('div');
-                    leafDiv.className = 'tree-leaf';
-                    leafDiv.innerHTML = `<b>${secCode}</b> — ${escapeHtml(secPages[0].subject)} (${secPages.length} pag.)`;
-                    leafDiv.onclick = (e) => {
-                        e.stopPropagation();
-                        jumpToPage(secPages[0].pageNum);
+                    return {
+                        ...item,
+                        score
                     };
-                    childrenUl.appendChild(leafDiv);
+
                 });
 
-                nodeDiv.appendChild(childrenUl);
-                container.appendChild(nodeDiv);
-            });
+
+        candidates.sort(
+            (a, b) =>
+                b.score - a.score ||
+                b.y - a.y ||
+                a.index - b.index
+        );
+
+
+        return (
+            candidates[0]?.raw ||
+            null
+        );
+
+    }
+
+
+    function findSubject(
+        pdfPage,
+        items,
+        fullText,
+        sectionCode
+    ) {
+
+        const underlined =
+            findUnderlinedSubject(
+                pdfPage,
+                items
+            );
+
+        if (underlined) {
+
+            return underlined
+                .toLowerCase()
+                .replace(
+                    /\b\w/g,
+                    c => c.toUpperCase()
+                );
+
         }
 
-        async function renderSelectedPage(bookIdx, pageNum) {
-            isShowingAtaOverview = false;
-            document.getElementById('ataOverviewContainer').style.display = 'none';
-            document.getElementById('pdfContainerWrapper').style.display = 'flex';
-            document.getElementById('viewerToolbar').style.display = 'flex';
+        return 'General Information';
 
-            const currentAircraft = getCurrentAircraft();
-            if (!currentAircraft.books[bookIdx]) return;
-            const book = currentAircraft.books[bookIdx];
-            if (pageNum < 1 || pageNum > book.pdfDoc.numPages) return;
+    }
 
-            currentBookIndex = bookIdx;
-            activePageNum = pageNum;
+
+    /* ============================================================
+       BUILD TREE
+       ============================================================ */
+
+    function rebuildCurrentAircraftTree() {
+
+        const globalChapters = {};
+
+        loadedBooks.forEach(book => {
+
+            book.pages.forEach(page => {
+
+                if (
+                    !globalChapters[
+                        page.chapter
+                    ]
+                ) {
+
+                    globalChapters[
+                        page.chapter
+                    ] = [];
+
+                }
+
+                globalChapters[
+                    page.chapter
+                ].push(page);
+
+            });
+
+        });
+
+        buildTreeUI(
+            globalChapters
+        );
+
+    }
+
+
+    function buildTreeUI(chapters) {
+
+        const container =
+            document.getElementById(
+                'treeContainer'
+            );
+
+        container.innerHTML = '';
+
+
+        const sortedChapters =
+            Object.keys(chapters)
+                .sort(
+                    (a, b) =>
+                        Number(a) -
+                        Number(b)
+                );
+
+
+        if (
+            sortedChapters.length === 0
+        ) {
+
+            container.innerHTML =
+                '<i>Nog geen boeken geladen. Gebruik hieronder de uploadknop.</i>';
+
+            return;
+
+        }
+
+
+        sortedChapters.forEach(ch => {
+
+            const chapterName =
+                getAtaChapterName(ch);
+
+            const pages =
+                chapters[ch];
+
+
+            const nodeDiv =
+                document.createElement(
+                    'div'
+                );
+
+            nodeDiv.className =
+                'tree-node';
+
+
+            const toggleDiv =
+                document.createElement(
+                    'div'
+                );
+
+            toggleDiv.className =
+                'tree-toggle';
+
+
+            toggleDiv.onclick =
+                () =>
+                    toggleNode(
+                        toggleDiv
+                    );
+
+
+            toggleDiv.innerHTML = `
+                <span class="toggle-symbol">></span>
+                <b>ATA ${escapeHtml(ch)}</b>
+                — ${escapeHtml(chapterName)}
+                (${pages.length})
+            `;
+
+
+            nodeDiv.appendChild(
+                toggleDiv
+            );
+
+
+            const childrenUl =
+                document.createElement(
+                    'ul'
+                );
+
+            childrenUl.className =
+                'tree-children';
+
+
+            const sections = {};
+
+
+            pages.forEach(page => {
+
+                if (
+                    !sections[
+                        page.sectionCode
+                    ]
+                ) {
+
+                    sections[
+                        page.sectionCode
+                    ] = [];
+
+                }
+
+                sections[
+                    page.sectionCode
+                ].push(page);
+
+            });
+
+
+            Object.keys(sections)
+                .sort()
+                .forEach(secCode => {
+
+                    const secPages =
+                        sections[
+                            secCode
+                        ];
+
+
+                    const leafDiv =
+                        document.createElement(
+                            'div'
+                        );
+
+                    leafDiv.className =
+                        'tree-leaf';
+
+
+                    leafDiv.innerHTML = `
+                        <b>${escapeHtml(secCode)}</b>
+                        — ${escapeHtml(secPages[0].subject)}
+                        (${secPages.length} pag.)
+                    `;
+
+
+                    leafDiv.onclick =
+                        e => {
+
+                            e.stopPropagation();
+
+                            renderSelectedPage(
+                                loadedBooks.indexOf(
+                                    loadedBooks.find(
+                                        book =>
+                                            book.pages.includes(
+                                                secPages[0]
+                                            )
+                                    )
+                                ),
+                                secPages[0].pageNum
+                            );
+
+                        };
+
+
+                    childrenUl.appendChild(
+                        leafDiv
+                    );
+
+                });
+
+
+            nodeDiv.appendChild(
+                childrenUl
+            );
+
+            container.appendChild(
+                nodeDiv
+            );
+
+        });
+
+    }
+
+
+    /* ============================================================
+       UPLOAD MANUALS
+       ============================================================ */
+
+    async function processMultipleManuals(event) {
+
+        const files =
+            event.target.files;
+
+
+        if (
+            !files ||
+            files.length === 0
+        ) {
+            return;
+        }
+
+
+        const currentAircraft =
+            getCurrentAircraft();
+
+
+        if (
+            currentAircraft.books.length +
+            files.length >
+            4
+        ) {
+
+            alert(
+                'Je kunt maximaal 4 boeken per vliegtuig laden.'
+            );
+
+            event.target.value = '';
+
+            return;
+
+        }
+
+
+        const progressBarContainer =
+            document.getElementById(
+                'progressBarContainer'
+            );
+
+        const progressBarFill =
+            document.getElementById(
+                'progressBarFill'
+            );
+
+
+        progressBarContainer.style.display =
+            'block';
+
+        progressBarFill.style.width =
+            '0%';
+
+
+        const totalFiles =
+            files.length;
+
+        let processedFilesCount = 0;
+
+
+        for (
+            let i = 0;
+            i < totalFiles;
+            i++
+        ) {
+
+            const file =
+                files[i];
+
 
             try {
-                const page = await book.pdfDoc.getPage(pageNum);
-                const viewport = page.getViewport({ scale: renderScale });
-                canvasElement.height = viewport.height;
-                canvasElement.width = viewport.width;
 
-                const renderContext = {
-                    canvasContext: canvasContext,
-                    viewport: viewport
-                };
+                document.getElementById(
+                    'viewerStatus'
+                ).innerText =
+                    `Bezig met inlezen van "${file.name}"...`;
 
-                await page.render(renderContext).promise;
-                document.getElementById('pageIndicator').innerText = `Boek: ${book.name} | Pagina ${pageNum} / ${book.pdfDoc.numPages}`;
-                document.getElementById('viewerStatus').innerText = `Actief: ${currentAircraft.name}`;
+
+                const arrayBuffer =
+                    await file.arrayBuffer();
+
+
+                const loadingTask =
+                    pdfjsLib.getDocument({
+                        data: arrayBuffer
+                    });
+
+
+                const pdfDoc =
+                    await loadingTask.promise;
+
+
+                const bookPages = [];
+
+                const numPages =
+                    pdfDoc.numPages;
+
+
+                /*
+                 * Elke pagina verwerken.
+                 */
+
+                for (
+                    let pageNum = 1;
+                    pageNum <= numPages;
+                    pageNum++
+                ) {
+
+                    const pdfPage =
+                        await pdfDoc.getPage(
+                            pageNum
+                        );
+
+
+                    const textContent =
+                        await pdfPage.getTextContent();
+
+
+                    /*
+                     * Tekst-items netjes opslaan.
+                     */
+
+                    const textItems =
+                        textContent.items
+                            .map(item => ({
+
+                                str:
+                                    String(
+                                        item.str ||
+                                        ''
+                                    ).trim(),
+
+                                x:
+                                    Number(
+                                        item.transform[4]
+                                    ) || 0,
+
+                                y:
+                                    Number(
+                                        item.transform[5]
+                                    ) || 0
+
+                            }))
+                            .filter(
+                                item =>
+                                    item.str
+                            );
+
+
+                    /*
+                     * Volledige tekst.
+                     */
+
+                    const fullText =
+                        textItems
+                            .map(
+                                item =>
+                                    item.str
+                            )
+                            .join(' ');
+
+
+                    /*
+                     * ATA bepalen.
+                     */
+
+                    const ataInfo =
+                        extractAtaInfo(
+                            textItems
+                        );
+
+
+                    /*
+                     * Subject bepalen.
+                     */
+
+                    const subject =
+                        findSubject(
+                            pdfPage,
+                            textItems,
+                            fullText,
+                            ataInfo.sectionCode
+                        );
+
+
+                    /*
+                     * PDF pagina label.
+                     */
+
+                    const pageLabel =
+                        getPageLabel(
+                            fullText,
+                            pageNum
+                        );
+
+
+                    /*
+                     * Pagina opslaan.
+                     */
+
+                    bookPages.push({
+
+                        pageNum,
+
+                        chapter:
+                            ataInfo.chapter,
+
+                        sectionCode:
+                            ataInfo.sectionCode,
+
+                        subject,
+
+                        pageLabel,
+
+                        fullText
+
+                    });
+
+
+                    /*
+                     * Progress.
+                     */
+
+                    const filePercent =
+                        Math.round(
+                            (pageNum /
+                                numPages) *
+                            100
+                        );
+
+
+                    const totalOverallPercent =
+                        Math.round(
+                            (
+                                (
+                                    processedFilesCount +
+                                    (
+                                        pageNum /
+                                        numPages
+                                    )
+                                ) /
+                                totalFiles
+                            ) *
+                            100
+                        );
+
+
+                    progressBarFill.style.width =
+                        totalOverallPercent +
+                        '%';
+
+
+                    document.getElementById(
+                        'viewerStatus'
+                    ).innerText =
+                        `Verwerken: ${file.name} — ${filePercent}% (${pageNum}/${numPages} pag.) [${totalOverallPercent}% totaal]`;
+
+                }
+
+
+                /*
+                 * Boek opslaan.
+                 */
+
+                currentAircraft.books.push({
+
+                    name:
+                        file.name,
+
+                    pdfDoc:
+                        pdfDoc,
+
+                    pages:
+                        bookPages
+
+                });
+
+
+                processedFilesCount++;
+
+
             } catch (err) {
-                console.error('Fout bij renderen pagina:', err);
+
+                console.error(
+                    'Fout bij verwerken PDF:',
+                    err
+                );
+
+
+                alert(
+                    `Fout bij verwerken van bestand ${file.name}: ${err.message}`
+                );
+
             }
+
         }
 
-        function jumpToPage(pageNum) {
-            renderSelectedPage(currentBookIndex, pageNum);
-        }
 
-        function nextPage() {
-            const currentAircraft = getCurrentAircraft();
-            if (!currentAircraft.books[currentBookIndex]) return;
-            const book = currentAircraft.books[currentBookIndex];
-            if (activePageNum < book.pdfDoc.numPages) {
-                renderSelectedPage(currentBookIndex, activePageNum + 1);
-            }
-        }
+        progressBarContainer.style.display =
+            'none';
 
-        function prevPage() {
-            if (activePageNum > 1) {
-                renderSelectedPage(currentBookIndex, activePageNum - 1);
-            }
-        }
+        progressBarFill.style.width =
+            '0%';
 
-        function executeGlobalSearch() {
-            const query = normalizeText(document.getElementById('globalSearchInput').value);
-            const container = document.getElementById('searchResultsContainer');
-            container.innerHTML = '';
 
-            if (!query) {
-                container.innerHTML = '<i>Voer een zoekterm in om te zoeken.</i>';
-                return;
-            }
+        /*
+         * UI opnieuw opbouwen.
+         */
 
-            const currentAircraft = getCurrentAircraft();
-            let results = [];
-
-            currentAircraft.books.forEach((book, bIdx) => {
-                book.pages.forEach(p => {
-                    if (normalizeText(p.fullText).includes(query) || normalizeText(p.subject).includes(query)) {
-                        results.push({ bookIdx: bIdx, bookName: book.name, page: p });
-                    }
-                });
-            });
-
-            if (results.length === 0) {
-                container.innerHTML = '<i>Geen resultaten gevonden voor "' + escapeHtml(query) + '".</i>';
-                return;
-            }
-
-            results.forEach(res => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'search-result-item';
-                itemDiv.innerHTML = `<b>Boek:</b> ${escapeHtml(res.bookName)}<br><b>ATA ${res.page.chapter} (${res.page.sectionCode})</b> — ${escapeHtml(res.page.subject)}<br><span style="color:#64748b;">Pagina ${res.page.pageNum} (${res.page.pageLabel})</span>`;
-                itemDiv.onclick = () => {
-                    renderSelectedPage(res.bookIdx, res.page.pageNum);
-                };
-                container.appendChild(itemDiv);
-            });
-        }
-
-        function runTroubleshoot() {
-            const query = normalizeText(document.getElementById('troubleshootInput').value);
-            const container = document.getElementById('troubleshootResults');
-            container.innerHTML = '';
-
-            if (!query) {
-                container.innerHTML = '<i>Zoek een foutmelding of ATA-hoofdstuk.</i>';
-                return;
-            }
-
-            const currentAircraft = getCurrentAircraft();
-            let matches = [];
-
-            currentAircraft.books.forEach((book, bIdx) => {
-                book.pages.forEach(p => {
-                    const textNorm = normalizeText(p.fullText);
-                    const subjNorm = normalizeText(p.subject);
-                    const chapNorm = normalizeText(p.chapter);
-                    const secNorm = normalizeText(p.sectionCode);
-
-                    if (textNorm.includes(query) || subjNorm.includes(query) || chapNorm === query || secNorm === query) {
-                        matches.push({ bookIdx: bIdx, bookName: book.name, page: p });
-                    }
-                });
-            });
-
-            if (matches.length === 0) {
-                container.innerHTML = '<i>Geen overeenkomende procedures of waarschuwingen gevonden.</i>';
-                return;
-            }
-
-            matches.slice(0, 30).forEach(res => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'search-result-item';
-                itemDiv.innerHTML = `<b>${escapeHtml(res.bookName)}</b><br>ATA ${res.page.chapter} — ${escapeHtml(res.page.subject)} (Pagina ${res.page.pageNum})`;
-                itemDiv.onclick = () => {
-                    renderSelectedPage(res.bookIdx, res.page.pageNum);
-                };
-                container.appendChild(itemDiv);
-            });
-        }
-
-        // Initialiseer UI bij laden
         refreshAircraftUI();
-    </script>
+
+        loadedBooks =
+            currentAircraft.books;
+
+        rebuildCurrentAircraftTree();
+
+
+        if (
+            currentAircraft.books.length >
+            0
+        ) {
+
+            currentBookIndex = 0;
+
+            activePageNum = 1;
+
+            document.getElementById(
+                'viewerToolbar'
+            ).style.display =
+                'flex';
+
+            renderSelectedPage(
+                0,
+                1
+            );
+
+        }
+
+
+        document.getElementById(
+            'viewerStatus'
+        ).innerText =
+            'Gereed';
+
+
+        event.target.value = '';
+
+    }
+
+
+    /* ============================================================
+       PDF VIEWER
+       ============================================================ */
+
+    async function renderSelectedPage(
+        bookIdx,
+        pageNum
+    ) {
+
+        isShowingAtaOverview =
+            false;
+
+
+        document.getElementById(
+            'ataOverviewContainer'
+        ).style.display =
+            'none';
+
+
+        document.getElementById(
+            'pdfContainerWrapper'
+        ).style.display =
+            'flex';
+
+
+        document.getElementById(
+            'viewerToolbar'
+        ).style.display =
+            'flex';
+
+
+        const currentAircraft =
+            getCurrentAircraft();
+
+
+        if (
+            !currentAircraft.books[
+                bookIdx
+            ]
+        ) {
+            return;
+        }
+
+
+        const book =
+            currentAircraft.books[
+                bookIdx
+            ];
+
+
+        if (
+            pageNum < 1 ||
+            pageNum >
+                book.pdfDoc.numPages
+        ) {
+            return;
+        }
+
+
+        currentBookIndex =
+            bookIdx;
+
+        activePageNum =
+            pageNum;
+
+
+        try {
+
+            const page =
+                await book.pdfDoc.getPage(
+                    pageNum
+                );
+
+
+            const viewport =
+                page.getViewport({
+                    scale: renderScale
+                });
+
+
+            canvasElement.height =
+                viewport.height;
+
+            canvasElement.width =
+                viewport.width;
+
+
+            const renderContext = {
+
+                canvasContext:
+                    canvasContext,
+
+                viewport:
+                    viewport
+
+            };
+
+
+            await page
+                .render(
+                    renderContext
+                )
+                .promise;
+
+
+            document.getElementById(
+                'pageIndicator'
+            ).innerText =
+                `Boek: ${book.name} | Pagina ${pageNum} / ${book.pdfDoc.numPages}`;
+
+
+            document.getElementById(
+                'viewerStatus'
+            ).innerText =
+                `Actief: ${currentAircraft.name}`;
+
+        } catch (err) {
+
+            console.error(
+                'Fout bij renderen pagina:',
+                err
+            );
+
+        }
+
+    }
+
+
+    function jumpToPage(pageNum) {
+
+        renderSelectedPage(
+            currentBookIndex,
+            pageNum
+        );
+
+    }
+
+
+    function nextPage() {
+
+        const currentAircraft =
+            getCurrentAircraft();
+
+
+        if (
+            !currentAircraft.books[
+                currentBookIndex
+            ]
+        ) {
+            return;
+        }
+
+
+        const book =
+            currentAircraft.books[
+                currentBookIndex
+            ];
+
+
+        if (
+            activePageNum <
+            book.pdfDoc.numPages
+        ) {
+
+            renderSelectedPage(
+                currentBookIndex,
+                activePageNum + 1
+            );
+
+        }
+
+    }
+
+
+    function prevPage() {
+
+        if (
+            activePageNum > 1
+        ) {
+
+            renderSelectedPage(
+                currentBookIndex,
+                activePageNum - 1
+            );
+
+        }
+
+    }
+
+
+    /* ============================================================
+       ATA OVERVIEW
+       ============================================================ */
+
+    function toggleAtaChaptersOverview() {
+
+        const currentAircraft =
+            getCurrentAircraft();
+
+
+        isShowingAtaOverview =
+            !isShowingAtaOverview;
+
+
+        if (
+            isShowingAtaOverview
+        ) {
+
+            document.getElementById(
+                'pdfContainerWrapper'
+            ).style.display =
+                'none';
+
+
+            document.getElementById(
+                'ataOverviewContainer'
+            ).style.display =
+                'block';
+
+
+            document.getElementById(
+                'viewerToolbar'
+            ).style.display =
+                'none';
+
+
+            document.getElementById(
+                'viewerStatus'
+            ).innerText =
+                'Overzicht: ATA Chapters';
+
+        } else {
+
+            document.getElementById(
+                'ataOverviewContainer'
+            ).style.display =
+                'none';
+
+
+            document.getElementById(
+                'pdfContainerWrapper'
+            ).style.display =
+                'flex';
+
+
+            if (
+                currentAircraft.books.length
+            ) {
+
+                document.getElementById(
+                    'viewerToolbar'
+                ).style.display =
+                    'flex';
+
+
+                renderSelectedPage(
+                    currentBookIndex,
+                    activePageNum
+                );
+
+            }
+
+        }
+
+    }
+
+
+    /* ============================================================
+       GLOBAL SEARCH
+       ============================================================ */
+
+    function executeGlobalSearch() {
+
+        const query =
+            normalizeText(
+                document.getElementById(
+                    'globalSearchInput'
+                ).value
+            );
+
+
+        const container =
+            document.getElementById(
+                'searchResultsContainer'
+            );
+
+
+        container.innerHTML = '';
+
+
+        if (!query) {
+
+            container.innerHTML =
+                '<i>Voer een zoekterm in om te zoeken.</i>';
+
+            return;
+
+        }
+
+
+        const currentAircraft =
+            getCurrentAircraft();
+
+
+        const results = [];
+
+
+        currentAircraft.books.forEach(
+            (book, bIdx) => {
+
+                book.pages.forEach(page => {
+
+                    if (
+                        normalizeText(
+                            page.fullText
+                        ).includes(query) ||
+
+                        normalizeText(
+                            page.subject
+                        ).includes(query)
+                    ) {
+
+                        results.push({
+
+                            bookIdx:
+                                bIdx,
+
+                            bookName:
+                                book.name,
+
+                            page
+
+                        });
+
+                    }
+
+                });
+
+            }
+        );
+
+
+        if (
+            results.length === 0
+        ) {
+
+            container.innerHTML =
+                `<i>Geen resultaten gevonden voor "${escapeHtml(query)}".</i>`;
+
+            return;
+
+        }
+
+
+        results.forEach(res => {
+
+            const itemDiv =
+                document.createElement(
+                    'div'
+                );
+
+
+            itemDiv.className =
+                'search-result-item';
+
+
+            itemDiv.innerHTML = `
+                <b>Boek:</b>
+                ${escapeHtml(res.bookName)}
+                <br>
+
+                <b>ATA ${escapeHtml(res.page.chapter)}
+                (${escapeHtml(res.page.sectionCode)})</b>
+                —
+                ${escapeHtml(res.page.subject)}
+
+                <br>
+
+                <span style="color:#64748b;">
+                    Pagina ${res.page.pageNum}
+                    (${escapeHtml(res.page.pageLabel)})
+                </span>
+            `;
+
+
+            itemDiv.onclick =
+                () => {
+
+                    renderSelectedPage(
+                        res.bookIdx,
+                        res.page.pageNum
+                    );
+
+                };
+
+
+            container.appendChild(
+                itemDiv
+            );
+
+        });
+
+    }
+
+
+    /* ============================================================
+       TROUBLESHOOT
+       ============================================================ */
+
+    function runTroubleshoot() {
+
+        const query =
+            normalizeText(
+                document.getElementById(
+                    'troubleshootInput'
+                ).value
+            );
+
+
+        const container =
+            document.getElementById(
+                'troubleshootResults'
+            );
+
+
+        container.innerHTML = '';
+
+
+        if (!query) {
+
+            container.innerHTML =
+                '<i>Zoek een foutmelding of ATA-hoofdstuk.</i>';
+
+            return;
+
+        }
+
+
+        const currentAircraft =
+            getCurrentAircraft();
+
+
+        const matches = [];
+
+
+        currentAircraft.books.forEach(
+            (book, bIdx) => {
+
+                book.pages.forEach(page => {
+
+                    const textNorm =
+                        normalizeText(
+                            page.fullText
+                        );
+
+                    const subjNorm =
+                        normalizeText(
+                            page.subject
+                        );
+
+                    const chapNorm =
+                        normalizeText(
+                            page.chapter
+                        );
+
+                    const secNorm =
+                        normalizeText(
+                            page.sectionCode
+                        );
+
+
+                    if (
+
+                        textNorm.includes(
+                            query
+                        ) ||
+
+                        subjNorm.includes(
+                            query
+                        ) ||
+
+                        chapNorm ===
+                            query ||
+
+                        secNorm ===
+                            query
+
+                    ) {
+
+                        matches.push({
+
+                            bookIdx:
+                                bIdx,
+
+                            bookName:
+                                book.name,
+
+                            page
+
+                        });
+
+                    }
+
+                });
+
+            }
+        );
+
+
+        if (
+            matches.length === 0
+        ) {
+
+            container.innerHTML =
+                '<i>Geen overeenkomende procedures of waarschuwingen gevonden.</i>';
+
+            return;
+
+        }
+
+
+        matches
+            .slice(0, 30)
+            .forEach(res => {
+
+                const itemDiv =
+                    document.createElement(
+                        'div'
+                    );
+
+
+                itemDiv.className =
+                    'search-result-item';
+
+
+                itemDiv.innerHTML = `
+                    <b>
+                        ${escapeHtml(res.bookName)}
+                    </b>
+                    <br>
+                    ATA ${escapeHtml(res.page.chapter)}
+                    —
+                    ${escapeHtml(res.page.subject)}
+                    (Pagina ${res.page.pageNum})
+                `;
+
+
+                itemDiv.onclick =
+                    () => {
+
+                        renderSelectedPage(
+                            res.bookIdx,
+                            res.page.pageNum
+                        );
+
+                    };
+
+
+                container.appendChild(
+                    itemDiv
+                );
+
+            });
+
+    }
+
+
+    /* ============================================================
+       INITIALIZE
+       ============================================================ */
+
+    refreshAircraftUI();
+
+    rebuildCurrentAircraftTree();
+
+</script>
+
 </body>
 </html>
