@@ -508,6 +508,24 @@
         .ata-table tr:nth-child(even) {
             background-color: #f8fafc;
         }
+
+        /* Voortgangsbalk styling */
+        .progress-bar-container {
+            width: 100%;
+            background-color: #cbd5e1;
+            border-radius: 3px;
+            overflow: hidden;
+            height: 6px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background-color: var(--airbus-orange);
+            transition: width 0.1s linear;
+        }
     </style>
 </head>
 <body>
@@ -628,6 +646,10 @@
             <div class="upload-section">
                 <label id="uploadLabel">Manuals voor Falcon (max. 4):</label>
                 <input type="file" id="pdfUpload" accept=".pdf" multiple onchange="processMultipleManuals(event)">
+                <!-- Voortgangsbalk toegevoegd -->
+                <div id="progressBarContainer" class="progress-bar-container">
+                    <div id="progressBarFill" class="progress-bar-fill"></div>
+                </div>
             </div>
         </div>
 
@@ -1072,20 +1094,31 @@
             const currentAircraft = getCurrentAircraft();
             if (currentAircraft.books.length + files.length > 4) {
                 alert('Je kunt maximaal 4 boeken per vliegtuig laden.');
+                event.target.value = '';
                 return;
             }
 
-            document.getElementById('viewerStatus').innerText = 'Bezig met inlezen en parsen van PDF(s)...';
+            const progressBarContainer = document.getElementById('progressBarContainer');
+            const progressBarFill = document.getElementById('progressBarFill');
+            progressBarContainer.style.display = 'block';
+            progressBarFill.style.width = '0%';
 
-            for (let i = 0; i < files.length; i++) {
+            let totalFiles = files.length;
+            let processedFilesCount = 0;
+
+            for (let i = 0; i < totalFiles; i++) {
                 const file = files[i];
                 try {
+                    document.getElementById('viewerStatus').innerText = `Bezig met inlezen van "${file.name}"... (0%)`;
+                    
                     const arrayBuffer = await file.arrayBuffer();
                     const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
                     const pdfDoc = await loadingTask.promise;
                     
                     const bookPages = [];
-                    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                    const numPages = pdfDoc.numPages;
+
+                    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
                         const pdfPage = await pdfDoc.getPage(pageNum);
                         const textContent = await pdfPage.getTextContent();
                         const textItems = textContent.items.map(item => ({
@@ -1106,6 +1139,13 @@
                             pageLabel,
                             fullText
                         });
+
+                        // Bereken nauwkeurig percentage binnen dit boek
+                        let filePercent = Math.round((pageNum / numPages) * 100);
+                        let totalOverallPercent = Math.round(((processedFilesCount + (pageNum / numPages)) / totalFiles) * 100);
+                        
+                        progressBarFill.style.width = totalOverallPercent + '%';
+                        document.getElementById('viewerStatus').innerText = `Verwerken: ${file.name} — ${filePercent}% (${pageNum}/${numPages} pag.) [${totalOverallPercent}% totaal]`;
                     }
 
                     currentAircraft.books.push({
@@ -1113,11 +1153,16 @@
                         pdfDoc: pdfDoc,
                         pages: bookPages
                     });
+
+                    processedFilesCount++;
                 } catch (err) {
                     console.error('Fout bij verwerken PDF:', err);
                     alert(`Fout bij verwerken van bestand ${file.name}: ${err.message}`);
                 }
             }
+
+            progressBarContainer.style.display = 'none';
+            progressBarFill.style.width = '0%';
 
             refreshAircraftUI();
             rebuildCurrentAircraftTree();
@@ -1304,7 +1349,7 @@
 
             currentAircraft.books.forEach((book, bIdx) => {
                 book.pages.forEach(p => {
-                    const textNorm = normalizeText(p.fullTest);
+                    const textNorm = normalizeText(p.fullText);
                     const subjNorm = normalizeText(p.subject);
                     const chapNorm = normalizeText(p.chapter);
                     const secNorm = normalizeText(p.sectionCode);
@@ -1336,3 +1381,4 @@
     </script>
 </body>
 </html>
+                                                                     
