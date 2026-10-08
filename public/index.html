@@ -477,9 +477,10 @@
         <div id="welcomeOverlay">
             <div class="welcome-card">
                 <h1>AeroNex <span>Kyran</span></h1>
-                <p>Welkom bij de ATA Manual Viewer. Upload een PDF-manual of open de applicatie direct om alle functies te bekijken.</p>
+                <p>Welkom bij de ATA Manual Viewer. Upload direct je PDF-manuals of open de app om alle functies te bekijken.</p>
                 <div class="welcome-buttons">
-                    <button class="welcome-upload-btn" onclick="document.getElementById('pdfUpload').click()">Upload Manuals</button>
+                    <!-- Deze knop activeert nu exact dezelfde file input functie als onderaan -->
+                    <button class="welcome-upload-btn" onclick="triggerUpload()">Upload Manuals</button>
                     <button class="welcome-skip-btn" onclick="closeWelcomeOverlay()">Open App (Direct / Sla Over)</button>
                 </div>
             </div>
@@ -612,6 +613,11 @@
 
         function closeWelcomeOverlay() {
             document.getElementById('welcomeOverlay').style.display = 'none';
+        }
+
+        // Functie zodat de knop in de overlay direct de file selector opent
+        function triggerUpload() {
+            document.getElementById('pdfUpload').click();
         }
 
         function refreshAircraftUI() {
@@ -965,6 +971,7 @@
                 }
             }
 
+            // Sluit het welkomstscherm zodra de PDFs zijn ingeladen
             closeWelcomeOverlay();
             refreshAircraftUI();
             rebuildCurrentAircraftTree();
