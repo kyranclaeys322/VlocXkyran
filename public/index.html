@@ -72,7 +72,13 @@
             padding: 5px 12px;
             font-size: 0.8rem;
             border-radius: 3px;
-            border: none;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .doc-view-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .header-center-info {
@@ -449,12 +455,58 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             border: 1px solid var(--border-color);
             padding: 5px;
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            justify-content: center;
         }
 
         #pdfCanvas {
             display: block;
             max-width: 100%;
             height: auto;
+        }
+
+        /* Styling voor de ATA Overzichtspagina in de viewer */
+        #ataOverviewContainer {
+            background: #fff;
+            width: 100%;
+            max-width: 900px;
+            padding: 30px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+            display: none;
+            overflow-y: auto;
+            max-height: calc(100vh - 120px);
+        }
+
+        #ataOverviewContainer h2 {
+            margin-bottom: 15px;
+            color: var(--airbus-header);
+            font-size: 1.4rem;
+            border-bottom: 2px solid var(--airbus-orange);
+            padding-bottom: 5px;
+        }
+
+        .ata-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .ata-table th, .ata-table td {
+            border: 1px solid #cbd5e1;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .ata-table th {
+            background-color: var(--airbus-header);
+            color: #fff;
+        }
+
+        .ata-table tr:nth-child(even) {
+            background-color: #f8fafc;
         }
     </style>
 </head>
@@ -463,7 +515,7 @@
     <header>
         <div class="header-left">
             <div class="airbus-logo">AeroNex <span>Kyran</span></div>
-            <button class="doc-view-btn">📄 Document View</button>
+            <button class="doc-view-btn" onclick="showAtaChaptersOverview()">📋 Ata chapters</button>
         </div>
         <div class="header-center-info" id="headerInfoText">
             AeroNex MANUAL VIEWER (MAX 4 BOEKEN)
@@ -589,8 +641,66 @@
                 <div style="color: #64748b;" id="viewerStatus">Gereed</div>
             </div>
 
-            <div class="pdf-canvas-container">
+            <!-- PDF VIEWER CONTAINER -->
+            <div class="pdf-canvas-container" id="pdfContainerWrapper">
                 <canvas id="pdfCanvas"></canvas>
+            </div>
+
+            <!-- ATA CHAPTERS OVERVIEW PAGE -->
+            <div id="ataOverviewContainer">
+                <h2>Volledig Overzicht ATA Chapters</h2>
+                <table class="ata-table">
+                    <thead>
+                        <tr>
+                            <th>Chap.</th>
+                            <th>Subject</th>
+                            <th>Chap.</th>
+                            <th>Subject</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>00</td><td>Air Vehicle General</td><td>51</td><td>Standard Practices – Structures</td></tr>
+                        <tr><td>04</td><td>Airworthiness Limitations</td><td>52</td><td>Doors</td></tr>
+                        <tr><td>05</td><td>Time Limits/Maintenance Checks</td><td>53</td><td>Fuselage</td></tr>
+                        <tr><td>06</td><td>Dimensions and Areas</td><td>54</td><td>Nacelles and Pylons</td></tr>
+                        <tr><td>07</td><td>Lifting, Shoring, Recovering and Transporting</td><td>55</td><td>Stabilizers</td></tr>
+                        <tr><td>08</td><td>Levelling and Weighing</td><td>56</td><td>Windows and Canopies</td></tr>
+                        <tr><td>09</td><td>Handling and Taxiing</td><td>57</td><td>Wings</td></tr>
+                        <tr><td>10</td><td>Parking and Mooring</td><td>60</td><td>Standard Practices – Propeller or Rotor</td></tr>
+                        <tr><td>11</td><td>Placards and Markings</td><td>61</td><td>Propellers and Propulsors</td></tr>
+                        <tr><td>12</td><td>Servicing</td><td>62</td><td>Main Rotors</td></tr>
+                        <tr><td>14</td><td>Air Vehicle Loading and Offloading</td><td>63</td><td>Main Rotor Drives</td></tr>
+                        <tr><td>15</td><td>Aircrew Information</td><td>64</td><td>Tail Rotor</td></tr>
+                        <tr><td>16</td><td>Change of Role</td><td>65</td><td>Tail Rotor Drive</td></tr>
+                        <tr><td>18</td><td>Vibration and Noise Analysis and Attenuation</td><td>66</td><td>Folding Blades and Pylon</td></tr>
+                        <tr><td>20</td><td>Standard Practices – Airframe Systems</td><td>67</td><td>Rotors Flight Control</td></tr>
+                        <tr><td>21</td><td>Environmental Control</td><td>70</td><td>Standard Practices – Engine</td></tr>
+                        <tr><td>22</td><td>Auto Flight</td><td>71</td><td>Power Plant</td></tr>
+                        <tr><td>23</td><td>Communications</td><td>72</td><td>Engine / Engine turbine/turboprop</td></tr>
+                        <tr><td>24</td><td>Electrical Power</td><td>73</td><td>Engine Fuel and Control</td></tr>
+                        <tr><td>25</td><td>Equipment and Furnishings</td><td>74</td><td>Ignition</td></tr>
+                        <tr><td>26</td><td>Fire Protection</td><td>75</td><td>Air</td></tr>
+                        <tr><td>27</td><td>Flight Controls</td><td>76</td><td>Engine Controls</td></tr>
+                        <tr><td>28</td><td>Fuel</td><td>77</td><td>Engine Indicating</td></tr>
+                        <tr><td>29</td><td>Hydraulic Power</td><td>78</td><td>Exhaust</td></tr>
+                        <tr><td>30</td><td>Ice and Rain Protection</td><td>79</td><td>Oil</td></tr>
+                        <tr><td>31</td><td>Indicating and Recording Systems</td><td>80</td><td>Starting</td></tr>
+                        <tr><td>32</td><td>Landing Gear</td><td>81</td><td>Turbines</td></tr>
+                        <tr><td>33</td><td>Lights</td><td>82</td><td>Water Injection</td></tr>
+                        <tr><td>34</td><td>Navigation</td><td>83</td><td>Accessory Gearboxes</td></tr>
+                        <tr><td>35</td><td>Oxygen</td><td>84</td><td>Propulsion Augmentation</td></tr>
+                        <tr><td>36</td><td>Pneumatic</td><td>91</td><td>Charts and Diagrams</td></tr>
+                        <tr><td>37</td><td>Vacuum</td><td>93</td><td>Surveillance</td></tr>
+                        <tr><td>38</td><td>Water and Waste</td><td>94</td><td>Weapons Systems</td></tr>
+                        <tr><td>41</td><td>Water Ballast</td><td>95</td><td>Crew Escape and Safety</td></tr>
+                        <tr><td>43</td><td>Tactical Communications</td><td>96</td><td>Missiles, Drones and Telemetry</td></tr>
+                        <tr><td>45</td><td>Central Maintenance System (CMS)</td><td>97</td><td>Image Recording</td></tr>
+                        <tr><td>46</td><td>Systems Integration and Display</td><td>98</td><td>Meteorological and Atmospheric Research</td></tr>
+                        <tr><td>47</td><td>Liquid Nitrogen</td><td></td><td></td></tr>
+                        <tr><td>48</td><td>In-Flight Refuelling Tanker</td><td></td><td></td></tr>
+                        <tr><td>49</td><td>Airborne Auxiliary Power</td><td></td><td></td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -611,6 +721,7 @@
         let renderScale = 1.3;
         let canvasElement = document.getElementById('pdfCanvas');
         let canvasContext = canvasElement.getContext('2d');
+        let isShowingAtaOverview = false;
 
         function getCurrentAircraft() {
             return aircraftProfiles[selectedAircraftIndex];
@@ -757,50 +868,69 @@
         }
 
         const ATA_CHAPTER_NAMES = {
-            '20': 'Standard Practices — Airframe',
-            '21': 'Air Conditioning',
+            '00': 'Air Vehicle General',
+            '04': 'Airworthiness Limitations',
+            '05': 'Time Limits/Maintenance Checks',
+            '06': 'Dimensions and Areas',
+            '07': 'Lifting, Shoring, Recovering and Transporting',
+            '08': 'Levelling and Weighing',
+            '09': 'Handling and Taxiing',
+            '10': 'Parking and Mooring',
+            '11': 'Placards and Markings',
+            '12': 'Servicing',
+            '14': 'Air Vehicle Loading and Offloading',
+            '15': 'Aircrew Information',
+            '16': 'Change of Role',
+            '18': 'Vibration and Noise Analysis and Attenuation',
+            '20': 'Standard Practices — Airframe Systems',
+            '21': 'Environmental Control',
             '22': 'Auto Flight',
             '23': 'Communications',
             '24': 'Electrical Power',
-            '25': 'Equipment / Furnishings',
+            '25': 'Equipment and Furnishings',
             '26': 'Fire Protection',
             '27': 'Flight Controls',
             '28': 'Fuel',
             '29': 'Hydraulic Power',
-            '30': 'Ice & Rain Protection',
-            '31': 'Indicating / Recording Systems',
+            '30': 'Ice and Rain Protection',
+            '31': 'Indicating and Recording Systems',
             '32': 'Landing Gear',
             '33': 'Lights',
             '34': 'Navigation',
             '35': 'Oxygen',
             '36': 'Pneumatic',
             '37': 'Vacuum',
-            '38': 'Water / Waste',
+            '38': 'Water and Waste',
             '39': 'Electrical — Panels / Components',
             '40': 'Multisystem',
             '41': 'Water Ballast',
             '42': 'Integrated Modular Avionics',
+            '43': 'Tactical Communications',
             '44': 'Cabin Systems',
-            '45': 'Central Maintenance System',
-            '46': 'Information Systems',
-            '47': 'Inert Gas System',
+            '45': 'Central Maintenance System (CMS)',
+            '46': 'Systems Integration and Display',
+            '47': 'Liquid Nitrogen',
+            '48': 'In-Flight Refuelling Tanker',
             '49': 'Airborne Auxiliary Power',
-            '51': 'Standard Practices / Structures',
+            '51': 'Standard Practices – Structures',
             '52': 'Doors',
             '53': 'Fuselage',
-            '54': 'Nacelles / Pylons',
+            '54': 'Nacelles and Pylons',
             '55': 'Stabilizers',
-            '56': 'Windows',
+            '56': 'Windows and Canopies',
             '57': 'Wings',
-            '61': 'Propellers / Propulsors',
-            '62': 'Main Rotor',
-            '63': 'Main Rotor Drive',
+            '60': 'Standard Practices – Propeller or Rotor',
+            '61': 'Propellers and Propulsors',
+            '62': 'Main Rotors',
+            '63': 'Main Rotor Drives',
             '64': 'Tail Rotor',
             '65': 'Tail Rotor Drive',
+            '66': 'Folding Blades and Pylon',
             '67': 'Rotors Flight Control',
+            '70': 'Standard Practices – Engine',
             '71': 'Power Plant',
             '72': 'Engine',
-            '73': 'Engine Fuel & Control',
+            '73': 'Engine Fuel and Control',
             '74': 'Ignition',
             '75': 'Air',
             '76': 'Engine Controls',
@@ -810,7 +940,15 @@
             '80': 'Starting',
             '81': 'Turbines',
             '82': 'Water Injection',
-            '83': 'Accessory Gearboxes'
+            '83': 'Accessory Gearboxes',
+            '84': 'Propulsion Augmentation',
+            '91': 'Charts and Diagrams',
+            '93': 'Surveillance',
+            '94': 'Weapons Systems',
+            '95': 'Crew Escape and Safety',
+            '96': 'Missiles, Drones and Telemetry',
+            '97': 'Image Recording',
+            '98': 'Meteorological and Atmospheric Research'
         };
 
         function getAtaChapterName(chapter) {
@@ -993,6 +1131,14 @@
             event.target.value = ''; // Reset file input
         }
 
+        function showAtaChaptersOverview() {
+            isShowingAtaOverview = true;
+            document.getElementById('pdfContainerWrapper').style.display = 'none';
+            document.getElementById('ataOverviewContainer').style.display = 'block';
+            document.getElementById('viewerToolbar').style.display = 'none';
+            document.getElementById('viewerStatus').innerText = 'Overzicht: ATA Chapters';
+        }
+
         function buildTreeUI(chapters) {
             const container = document.getElementById('treeContainer');
             container.innerHTML = '';
@@ -1043,6 +1189,11 @@
         }
 
         async function renderSelectedPage(bookIdx, pageNum) {
+            isShowingAtaOverview = false;
+            document.getElementById('ataOverviewContainer').style.display = 'none';
+            document.getElementById('pdfContainerWrapper').style.display = 'flex';
+            document.getElementById('viewerToolbar').style.display = 'flex';
+
             const currentAircraft = getCurrentAircraft();
             if (!currentAircraft.books[bookIdx]) return;
             const book = currentAircraft.books[bookIdx];
@@ -1168,8 +1319,9 @@
             });
         }
 
-        // Initialiseer UI bij laden
+        // Initialiseer UI bij laden en toon direct het ATA overzicht als startscherm achter de code
         refreshAircraftUI();
+        showAtaChaptersOverview();
     </script>
 </body>
 </html>
