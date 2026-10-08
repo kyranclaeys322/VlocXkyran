@@ -1249,6 +1249,100 @@
             resultsContainer.innerHTML = htmlResults;
         }
 
+function runTroubleshoot() {
+    const input = document.getElementById('troubleshootInput');
+    const results = document.getElementById('troubleshootResults');
+    const rawQuery = input.value.trim();
+    const query = normalizeText(rawQuery);
+
+    results.innerHTML = '';
+
+    if (query.length < 2) {
+        results.textContent = 'Typ minstens 2 tekens.';
+        return;
+    }
+
+    if (!loadedBooks.length) {
+        results.textContent =
+            'Laad eerst een PDF via de uploadknop om te kunnen zoeken.';
+        return;
+    }
+
+    const ataMatch = query.match(/\bata\s*(\d{2})\b/i);
+    const chapterMatch = query.match(/^\d{2}$/);
+    const requestedChapter = ataMatch
+        ? ataMatch[1]
+        : chapterMatch
+            ? query
+            : null;
+
+    const matches = [];
+
+    loadedBooks.forEach((book, bookIndex) => {
+        book.pages.forEach(page => {
+            const chapterMatches = requestedChapter &&
+                String(page.chapter).padStart(2, '0') === requestedChapter;
+
+            const textMatches = !requestedChapter &&
+                queryMatchesPage(page, query);
+
+            if (chapterMatches || textMatches) {
+                matches.push({
+                    ...page,
+                    bookIndex
+                });
+            }
+        });
+    });
+
+    if (!matches.length) {
+        results.textContent =
+            `Geen resultaten gevonden voor "${rawQuery}".`;
+        return;
+    }
+
+    const heading = document.createElement('div');
+    heading.style.marginBottom = '8px';
+    heading.style.color = '#64748b';
+    heading.textContent =
+        `${matches.length} zoekresultaat/resultaten in de geladen manuals`;
+    results.appendChild(heading);
+
+    matches.slice(0, 100).forEach(page => {
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+
+        const title = document.createElement('strong');
+        title.textContent =
+            `${page.sectionCode || 'ATA onbekend'} — ${page.subject || 'Pagina'}`;
+
+        const details = document.createElement('div');
+        details.style.marginTop = '4px';
+        details.style.color = '#0284c7';
+        details.textContent =
+            `${page.bookName} | PDF-pagina ${page.pageIndex}`;
+
+        const snippet = document.createElement('div');
+        snippet.style.marginTop = '5px';
+        snippet.style.color = '#475569';
+        snippet.textContent = getSearchSnippet(page, rawQuery);
+
+        item.append(title, details, snippet);
+        item.addEventListener('click', () => {
+            jumpToBookPage(page.bookIndex, page.pageIndex);
+        });
+
+        results.appendChild(item);
+    });
+
+    if (matches.length > 100) {
+        const note = document.createElement('p');
+        note.style.marginTop = '8px';
+        note.textContent =
+            'De eerste 100 resultaten worden getoond.';
+        results.appendChild(note);
+    }
+}
         function jumpToBookPage(bIdx, pageNum) {
             if (!loadedBooks[bIdx]) return;
             currentBookIndex = bIdx;
