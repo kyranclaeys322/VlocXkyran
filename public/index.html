@@ -91,6 +91,67 @@
             flex: 1;
             height: calc(100vh - 50px);
             overflow: hidden;
+            position: relative;
+        }
+
+        /* BEGINSCHERM / WELKOMSTOVERLAY */
+        #welcomeOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(7, 25, 48, 0.95);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .welcome-card {
+            background: #1e293b;
+            border: 1px solid #475569;
+            padding: 40px;
+            border-radius: 8px;
+            max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .welcome-card h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .welcome-card h1 span {
+            color: #00b0f0;
+        }
+
+        .welcome-card p {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .welcome-upload-btn {
+            background: var(--airbus-orange);
+            color: #000;
+            padding: 12px 24px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: filter 0.2s;
+        }
+
+        .welcome-upload-btn:hover {
+            filter: brightness(1.1);
         }
 
         .context-sidebar {
@@ -387,6 +448,15 @@
     </header>
 
     <div class="workspace">
+        <!-- BEGINSCHERM / WELKOMSTOVERLAY -->
+        <div id="welcomeOverlay">
+            <div class="welcome-card">
+                <h1>AeroNex <span>Kyran</span></h1>
+                <p>Welkom bij de ATA Manual Viewer. Om te beginnen selecteer je een vliegtuig en voeg je één of meerdere PDF-manuals toe.</p>
+                <button class="welcome-upload-btn" onclick="document.getElementById('pdfUpload').click()">Upload Manuals</button>
+            </div>
+        </div>
+
         <div class="context-sidebar">
             <div class="context-header">☰ CONTEXT</div>
             <div class="context-section">
@@ -497,7 +567,7 @@
 
     <script>
         // ================================================================
-        // AeroNex - ROBUUSTE ATA PARSER + FULL TEXT SEARCH
+        // AeroNex - ROBUUSTE ATA PARSER + FULL TEXT SEARCH + WELKOMSTOVERLAY
         // ================================================================
         let aircraftProfiles = [{ id: 1, name: 'Aircraft 1', books: [] }];
         let selectedAircraftIndex = 0;
@@ -525,6 +595,14 @@
             document.getElementById('headerInfoText').innerText = current.books.length
                 ? `${current.name.toUpperCase()} — ${current.books.map(b => b.name).join(', ')}`
                 : `${current.name.toUpperCase()} — GEEN MANUALS GELADEN`;
+
+            // Verberg het beginscherm zodra er boeken zijn
+            const welcomeOverlay = document.getElementById('welcomeOverlay');
+            if (current.books.length > 0) {
+                welcomeOverlay.style.display = 'none';
+            } else {
+                welcomeOverlay.style.display = 'flex';
+            }
         }
 
         function addAircraft() {
