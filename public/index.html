@@ -886,6 +886,252 @@
             }
             return 'General Information';
         }
+
+        async function processMultipleManuals(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            const currentAircraft = getCurrentAircraft();
+            if (currentAircraft.books.length + files.length > 4) {
+                alert('Je kunt maximaal 4 boeken per vliegtuig laden.');
+                return;
+            }
+
+            document.getElementById('viewerStatus').innerText = 'Bezig met inlezen en parsen van PDF(s)...';
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                    const pdfDoc = await loadingTask.promise;
+                    
+                    const bookPages = [];
+                    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                        const pdfPage = await pdfDoc.getPage(pageNum);
+                        const textContent = await pdfPage.getTextContent();
+                        const textItems = textContent.items.map(item => ({
+                            str: item.str,
+                            x: item.transform[4],
+                            y: item.transform[5]
+                        }));
+                        const fullText = textItems.map(item => item.str).join(' ');
+                        const ataInfo = extractAtaInfo(textItems);
+                        const subject = findSubject(pdfPage, textItems, fullText, ataInfo.sectionCode);
+                        const pageLabel = getPageLabel(fullText, pageNum);
+
+                        bookPages.push({
+                            pageNum,
+                            chapter: ataInfo.chapter,
+                            sectionCode: ataInfo.sectionCode,
+                            subject,
+                            pageLabel,
+                            fullText
+                        });
+                    }
+
+                    currentAircraft.books.push({
+                        name: file.name,
+                        pdfDoc: pdfDoc,
+                        pages: bookPages
+                    });
+                } catch (err) {
+                    console.error('Fout bij verwerken PDF:', err);
+                    alert(`Fout bij verwerken van bestand ${file.name}: ${err.message}`);
+                }
+            }
+
+            refreshAircraftUI();
+            rebuildCurrentAircraftTree();
+
+            if (currentAircraft.books.length > 0) {
+                currentBookIndex = 0;
+                activePageNum = 1;
+                document.getElementById('viewerToolbar').style.display = 'flex';
+                renderSelectedPage(0, 1);
+            }
+            document.getElementById('viewerStatus').innerText = 'Gereed';
+            event.target.value = ''; // Reset file input
+        }
+
+        function buildTreeUI(chapters) {
+            const container = document.getElementById('treeContainer');
+            container.innerHTML = '';
+
+            const sortedChapters = Object.keys(chapters).sort();
+            if (sortedChapters.length === 0) {
+                container.innerHTML = '<i>Nog geen boeken geladen. Gebruik hieronder de uploadknop.</i>';
+                return;
+            }
+
+            sortedChapters.forEach(ch => {
+                const chapterName = getAtaChapterName(ch);
+                const pages = chapters[ch];
+
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = 'tree-node';
+
+                const toggleDiv = document.createElement('div');
+                toggleDiv.className = 'tree-toggle';
+                toggleDiv.onclick = () => toggleNode(toggleDiv);
+                toggleDiv.innerHTML = `<span class="toggle-symbol">></span> <b>ATA ${ch}</b> — ${escapeHtml(chapterName)} (${pages.length})`;
+                nodeDiv.appendChild(toggleDiv);
+
+                const childrenUl = document.createElement('ul');
+                childrenUl.className = 'tree-children';
+
+                // Groepeer per sectionCode
+                const sections = {};
+                pages.forEach(p => {
+                    if (!sections[p.sectionCode]) sections[p.sectionCode] = [];
+                    sections[p.sectionCode].push(p);
+                });
+
+                Object.keys(sections).sort().forEach(secCode => {
+                    const secPages = sections[secCode];
+                    const leafDiv = document.createElement('div');
+                    leafDiv.className = 'tree-leaf';
+                    leafDiv.innerHTML = `<b>${secCode}</b> — ${escapeHtml(secPages[0].subject)} (${secPages.length} pag.)`;
+                    leafDiv.onclick = (e) => {
+                        e.stopPropagation();
+                        jumpToPage(secPages[0].pageNum);
+                    };
+                    childrenUl.appendChild(leafDiv);
+                });
+
+                nodeDiv.appendChild(childrenUl);
+                container.appendChild(nodeDiv);
+            });
+        }
+
+        async function renderSelectedPage(bookIdx, pageNum) {
+            const currentAircraft = getCurrentAircraft();
+            if (!currentAircraft.books[bookIdx]) return;
+            const book = currentAircraft.books[bookIdx];
+            if (pageNum < 1 || pageNum > book.pdfDoc.numPages) return;
+
+            currentBookIndex = bookIdx;
+            activePageNum = pageNum;
+
+            try {
+                const page = await book.pdfDoc.getPage(pageNum);
+                const viewport = page.getViewport({ scale: renderScale });
+                canvasElement.height = viewport.height;
+                canvasElement.width = viewport.width;
+
+                const renderContext = {
+                    canvasContext: canvasContext,
+                    viewport: viewport
+                };
+
+                await page.render(renderContext).promise;
+                document.getElementById('pageIndicator').innerText = `Boek: ${book.name} | Pagina ${pageNum} / ${book.pdfDoc.numPages}`;
+                document.getElementById('viewerStatus').innerText = `Actief: ${currentAircraft.name}`;
+            } catch (err) {
+                console.error('Fout bij renderen pagina:', err);
+            }
+        }
+
+        function jumpToPage(pageNum) {
+            renderSelectedPage(currentBookIndex, pageNum);
+        }
+
+        function nextPage() {
+            const currentAircraft = getCurrentAircraft();
+            if (!currentAircraft.books[currentBookIndex]) return;
+            const book = currentAircraft.books[currentBookIndex];
+            if (activePageNum < book.pdfDoc.numPages) {
+                renderSelectedPage(currentBookIndex, activePageNum + 1);
+            }
+        }
+
+        function prevPage() {
+            if (activePageNum > 1) {
+                renderSelectedPage(currentBookIndex, activePageNum - 1);
+            }
+        }
+
+        function executeGlobalSearch() {
+            const query = normalizeText(document.getElementById('globalSearchInput').value);
+            const container = document.getElementById('searchResultsContainer');
+            container.innerHTML = '';
+
+            if (!query) {
+                container.innerHTML = '<i>Voer een zoekterm in om te zoeken.</i>';
+                return;
+            }
+
+            const currentAircraft = getCurrentAircraft();
+            let results = [];
+
+            currentAircraft.books.forEach((book, bIdx) => {
+                book.pages.forEach(p => {
+                    if (normalizeText(p.fullText).includes(query) || normalizeText(p.subject).includes(query)) {
+                        results.push({ bookIdx: bIdx, bookName: book.name, page: p });
+                    }
+                });
+            });
+
+            if (results.length === 0) {
+                container.innerHTML = '<i>Geen resultaten gevonden voor "' + escapeHtml(query) + '".</i>';
+                return;
+            }
+
+            results.forEach(res => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'search-result-item';
+                itemDiv.innerHTML = `<b>Boek:</b> ${escapeHtml(res.bookName)}<br><b>ATA ${res.page.chapter} (${res.page.sectionCode})</b> — ${escapeHtml(res.page.subject)}<br><span style="color:#64748b;">Pagina ${res.page.pageNum} (${res.page.pageLabel})</span>`;
+                itemDiv.onclick = () => {
+                    renderSelectedPage(res.bookIdx, res.page.pageNum);
+                };
+                container.appendChild(itemDiv);
+            });
+        }
+
+        function runTroubleshoot() {
+            const query = normalizeText(document.getElementById('troubleshootInput').value);
+            const container = document.getElementById('troubleshootResults');
+            container.innerHTML = '';
+
+            if (!query) {
+                container.innerHTML = '<i>Zoek een foutmelding of ATA-hoofdstuk.</i>';
+                return;
+            }
+
+            const currentAircraft = getCurrentAircraft();
+            let matches = [];
+
+            currentAircraft.books.forEach((book, bIdx) => {
+                book.pages.forEach(p => {
+                    const textNorm = normalizeText(p.fullText);
+                    const subjNorm = normalizeText(p.subject);
+                    const chapNorm = normalizeText(p.chapter);
+                    const secNorm = normalizeText(p.sectionCode);
+
+                    if (textNorm.includes(query) || subjNorm.includes(query) || chapNorm === query || secNorm === query) {
+                        matches.push({ bookIdx: bIdx, bookName: book.name, page: p });
+                    }
+                });
+            });
+
+            if (matches.length === 0) {
+                container.innerHTML = '<i>Geen overeenkomende procedures of waarschuwingen gevonden.</i>';
+                return;
+            }
+
+            matches.slice(0, 30).forEach(res => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'search-result-item';
+                itemDiv.innerHTML = `<b>${escapeHtml(res.bookName)}</b><br>ATA ${res.page.chapter} — ${escapeHtml(res.page.subject)} (Pagina ${res.page.pageNum})`;
+                itemDiv.onclick = () => {
+                    renderSelectedPage(res.bookIdx, res.page.pageNum);
+                };
+                container.appendChild(itemDiv);
+            });
+        }
+
+        // Initialiseer UI bij laden
+        refreshAircraftUI();
     </script>
 </body>
 </html>
