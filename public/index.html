@@ -515,7 +515,7 @@
     <header>
         <div class="header-left">
             <div class="airbus-logo">AeroNex <span>Kyran</span></div>
-            <button class="doc-view-btn" onclick="showAtaChaptersOverview()">📋 Ata chapters</button>
+            <button class="doc-view-btn" onclick="toggleAtaChaptersOverview()">📋 Ata chapters</button>
         </div>
         <div class="header-center-info" id="headerInfoText">
             AeroNex MANUAL VIEWER (MAX 4 BOEKEN)
@@ -710,7 +710,6 @@
         // AeroNex - ROBUUSTE ATA PARSER + FULL TEXT SEARCH + TOEGANGSCODE
         // ================================================================
         
-        // TOEGANGSCODE INGESTELD OP Vti2026:
         const CORRECT_ACCESS_CODE = "Vti2026";
 
         let aircraftProfiles = [{ id: 1, name: 'Falcon', books: [] }];
@@ -794,6 +793,8 @@
         }
 
         function clearViewer() {
+            isShowingAtaOverview = false;
+            document.getElementById('ataOverviewContainer').style.display = 'none';
             canvasElement.width = 1;
             canvasElement.height = 1;
             canvasElement.style.width = '1px';
@@ -1128,15 +1129,26 @@
                 renderSelectedPage(0, 1);
             }
             document.getElementById('viewerStatus').innerText = 'Gereed';
-            event.target.value = ''; // Reset file input
+            event.target.value = '';
         }
 
-        function showAtaChaptersOverview() {
-            isShowingAtaOverview = true;
-            document.getElementById('pdfContainerWrapper').style.display = 'none';
-            document.getElementById('ataOverviewContainer').style.display = 'block';
-            document.getElementById('viewerToolbar').style.display = 'none';
-            document.getElementById('viewerStatus').innerText = 'Overzicht: ATA Chapters';
+        function toggleAtaChaptersOverview() {
+            const currentAircraft = getCurrentAircraft();
+            isShowingAtaOverview = !isShowingAtaOverview;
+
+            if (isShowingAtaOverview) {
+                document.getElementById('pdfContainerWrapper').style.display = 'none';
+                document.getElementById('ataOverviewContainer').style.display = 'block';
+                document.getElementById('viewerToolbar').style.display = 'none';
+                document.getElementById('viewerStatus').innerText = 'Overzicht: ATA Chapters';
+            } else {
+                document.getElementById('ataOverviewContainer').style.display = 'none';
+                document.getElementById('pdfContainerWrapper').style.display = 'flex';
+                if (currentAircraft.books.length > 0) {
+                    document.getElementById('viewerToolbar').style.display = 'flex';
+                    renderSelectedPage(currentBookIndex, activePageNum);
+                }
+            }
         }
 
         function buildTreeUI(chapters) {
@@ -1319,9 +1331,8 @@
             });
         }
 
-        // Initialiseer UI bij laden en toon direct het ATA overzicht als startscherm achter de code
+        // Initialiseer UI bij laden
         refreshAircraftUI();
-        showAtaChaptersOverview();
     </script>
 </body>
 </html>
