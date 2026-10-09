@@ -415,6 +415,7 @@
             background: white;
             padding: 5px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            position: relative;
         }
 
         #pdfCanvas {
@@ -422,6 +423,32 @@
             max-width: 100%;
             height: auto;
             margin: auto;
+        }
+
+        /* Selecteerbare tekstlaag boven op de PDF-canvas */
+        .textLayer {
+            position: absolute;
+            left: 5px;
+            top: 5px;
+            overflow: hidden;
+            line-height: 1;
+            text-align: initial;
+            transform-origin: 0 0;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+
+        .textLayer span,
+        .textLayer br {
+            color: transparent;
+            position: absolute;
+            white-space: pre;
+            cursor: text;
+            transform-origin: 0% 0%;
+        }
+
+        .textLayer ::selection {
+            background: rgba(0, 100, 255, 0.30);
         }
 
         #ataOverviewContainer {
@@ -485,6 +512,22 @@
                 display: none;
             }
         }
+
+        .ai-part-btn { background:#f59e0b;color:#071930;border:1px solid #fbbf24;padding:7px 12px;border-radius:4px;font-weight:700;cursor:pointer; }
+        .ai-part-btn:hover { filter:brightness(1.05); }
+        .ai-modal-backdrop { display:none; position:fixed; inset:0; z-index:500; background:rgba(2,12,27,.78); align-items:center; justify-content:center; padding:18px; }
+        .ai-modal { width:min(760px,100%); max-height:92vh; overflow:auto; background:#f8fafc; color:#1e293b; border:1px solid #64748b; border-radius:8px; box-shadow:0 20px 60px #0008; }
+        .ai-modal-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 18px; color:#fff; background:#071930; border-bottom:2px solid #00b0f0; }
+        .ai-modal-body { padding:18px; display:grid; gap:13px; }
+        .ai-field { display:grid; gap:6px; font-size:.85rem; }
+        .ai-field input { width:100%; padding:9px; border:1px solid #cbd5e1; border-radius:4px; background:white; }
+        .ai-help { color:#64748b; font-size:.78rem; line-height:1.45; }
+        .ai-status { padding:10px; background:#e2e8f0; border-radius:4px; font-size:.85rem; white-space:pre-wrap; }
+        .ai-result { padding:12px; border:1px solid #cbd5e1; border-left:4px solid #0284c7; background:#fff; border-radius:4px; margin-top:8px; }
+        .ai-result h4 { margin-bottom:5px; }
+        .ai-close { background:transparent; border:1px solid #64748b; color:#fff; padding:5px 9px; border-radius:4px; cursor:pointer; }
+        @media(max-width:650px) { .header-right { display:none; } .ai-modal-body { padding:12px; } }
+
     </style>
 </head>
 
@@ -504,6 +547,8 @@
             📋 ATA Chapters
         </button>
 
+        <button class="ai-part-btn" onclick="openAiPartFinder()">📷 AI Part Finder</button>
+
     </div>
 
     <div
@@ -517,6 +562,32 @@
     </div>
 
 </header>
+
+<div id="aiPartModal" class="ai-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="aiPartTitle">
+  <div class="ai-modal">
+    <div class="ai-modal-head">
+      <strong id="aiPartTitle">📷 AI IPC Part Finder</strong>
+      <button class="ai-close" onclick="closeAiPartFinder()" aria-label="Sluiten">Sluiten ✕</button>
+    </div>
+    <div class="ai-modal-body">
+      <p class="ai-help">Upload de IPC-catalogus voor dit vliegtuig en een duidelijke foto van het onderdeel. AI vergelijkt de foto met overzichtsbeelden uit de catalogus en geeft mogelijke matches met paginanummers. Controleer altijd de officiële IPC voor je een onderdeel bestelt of gebruikt.</p>
+      <label class="ai-field">Vliegtuigtype / model
+        <input id="aiAircraftModel" type="text" placeholder="Bijv. Falcon 7X, A320, B737">
+      </label>
+      <label class="ai-field">IPC-catalogus (PDF)
+        <input id="aiIpcPdf" type="file" accept="application/pdf,.pdf">
+      </label>
+      <label class="ai-field">Foto van het onderdeel
+        <input id="aiPartPhoto" type="file" accept="image/*">
+      </label>
+      <div class="ai-help">MVP-limiet: maximaal 60 pagina's per IPC-scan. Als je IPC langer is, upload dan eerst het relevante hoofdstuk/deel als aparte PDF. De API-sleutel staat uitsluitend op de server.</div>
+      <button id="aiRunBtn" class="ai-part-btn" onclick="runAiPartFinder()">Analyseer foto met AI</button>
+      <div id="aiPartStatus" class="ai-status" aria-live="polite">Kies een IPC-PDF en een foto om te beginnen.</div>
+      <div id="aiPartResults"></div>
+    </div>
+  </div>
+</div>
+
 
 
 <div class="workspace">
@@ -2829,6 +2900,32 @@
 
         }).promise;
 
+        // Verwijder de tekstlaag van de vorige pagina.
+        const wrapper = document.getElementById("pdfContainerWrapper");
+        const oldTextLayer = wrapper.querySelector(".textLayer");
+        if (oldTextLayer) oldTextLayer.remove();
+
+        // Bouw een onzichtbare tekstlaag boven de canvas zodat tekst
+        // met de muis geselecteerd en met Ctrl+C gekopieerd kan worden.
+        const textLayerDiv = document.createElement("div");
+        textLayerDiv.className = "textLayer";
+        textLayerDiv.style.width = `${viewport.width}px`;
+        textLayerDiv.style.height = `${viewport.height}px`;
+        wrapper.appendChild(textLayerDiv);
+
+        try {
+            const textContent = await page.getTextContent();
+            const textLayerTask = pdfjsLib.renderTextLayer({
+                textContent,
+                container: textLayerDiv,
+                viewport,
+                textDivs: []
+            });
+            await textLayerTask.promise;
+        } catch (error) {
+            console.warn("PDF-tekstlaag kon niet worden opgebouwd:", error);
+            textLayerDiv.remove();
+        }
 
         document.getElementById(
             "pageIndicator"
@@ -3297,6 +3394,130 @@
         }
     );
 
+
+
+    /* ============================================================
+       AI IPC PART FINDER
+       De browser rendert IPC-pagina's naar contact sheets. De server
+       verstuurt die samen met de onderdeel-foto naar het vision-model.
+       De API-sleutel blijft op de server in OPENAI_API_KEY.
+       ============================================================ */
+    function openAiPartFinder() {
+        document.getElementById("aiPartModal").style.display = "flex";
+        const current = getCurrentAircraft();
+        const modelInput = document.getElementById("aiAircraftModel");
+        if (!modelInput.value && current && current.name) modelInput.value = current.name;
+    }
+
+    function closeAiPartFinder() {
+        document.getElementById("aiPartModal").style.display = "none";
+    }
+
+    function setAiPartStatus(message) {
+        document.getElementById("aiPartStatus").textContent = message;
+    }
+
+    async function makeIpcContactSheets(file, onProgress) {
+        const buffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+        if (pdf.numPages > 60) {
+            throw new Error(`Deze IPC heeft ${pdf.numPages} pagina's. De eerste versie ondersteunt maximaal 60 pagina's per scan. Splits de PDF in relevante hoofdstukken.`);
+        }
+        const pageCanvases = [];
+        for (let n = 1; n <= pdf.numPages; n++) {
+            onProgress(`IPC-pagina's voorbereiden: ${n}/${pdf.numPages}...`);
+            const page = await pdf.getPage(n);
+            const base = page.getViewport({ scale: 1 });
+            const scale = Math.min(0.72, 420 / base.width, 520 / base.height);
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.ceil(viewport.width));
+            canvas.height = Math.max(1, Math.ceil(viewport.height + 28));
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            await page.render({ canvasContext: ctx, viewport }).promise;
+            ctx.fillStyle = '#071930'; ctx.fillRect(0, canvas.height - 28, canvas.width, 28);
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px Arial';
+            ctx.fillText(`IPC PDF page ${n}`, 8, canvas.height - 8);
+            pageCanvases.push(canvas);
+        }
+        const sheets = [];
+        for (let i = 0; i < pageCanvases.length; i += 4) {
+            const group = pageCanvases.slice(i, i + 4);
+            const cellW = 440, cellH = 560, gap = 12;
+            const sheet = document.createElement('canvas');
+            sheet.width = cellW * 2 + gap * 3; sheet.height = cellH * 2 + gap * 3;
+            const ctx = sheet.getContext('2d');
+            ctx.fillStyle = '#dbe4ee'; ctx.fillRect(0, 0, sheet.width, sheet.height);
+            group.forEach((canvas, index) => {
+                const x = gap + (index % 2) * (cellW + gap);
+                const y = gap + Math.floor(index / 2) * (cellH + gap);
+                const scale = Math.min((cellW - 8) / canvas.width, (cellH - 8) / canvas.height);
+                const w = canvas.width * scale, h = canvas.height * scale;
+                ctx.fillStyle = '#fff'; ctx.fillRect(x, y, cellW, cellH);
+                ctx.drawImage(canvas, x + (cellW - w) / 2, y + (cellH - h) / 2, w, h);
+            });
+            sheets.push(sheet.toDataURL('image/jpeg', 0.72));
+        }
+        return { sheets, pageCount: pdf.numPages };
+    }
+
+    async function runAiPartFinder() {
+        const ipcFile = document.getElementById('aiIpcPdf').files[0];
+        const photo = document.getElementById('aiPartPhoto').files[0];
+        const aircraft = document.getElementById('aiAircraftModel').value.trim() || 'Niet opgegeven';
+        const button = document.getElementById('aiRunBtn');
+        const results = document.getElementById('aiPartResults');
+        results.innerHTML = '';
+        if (!ipcFile || !photo) {
+            setAiPartStatus('Kies zowel de IPC-PDF als een foto van het onderdeel.');
+            return;
+        }
+        if (photo.size > 12 * 1024 * 1024) {
+            setAiPartStatus('De foto is te groot. Kies een foto kleiner dan 12 MB.'); return;
+        }
+        if (!photo.type.startsWith('image/')) {
+            setAiPartStatus('Het gekozen fotobestand is geen ondersteunde afbeelding.'); return;
+        }
+        button.disabled = true; button.style.opacity = '.65';
+        try {
+            const { sheets, pageCount } = await makeIpcContactSheets(ipcFile, setAiPartStatus);
+            setAiPartStatus(`IPC heeft ${pageCount} pagina's. Foto en ${sheets.length} contact sheets worden naar de AI gestuurd...`);
+            const photoDataUrl = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error('Foto kon niet worden gelezen.'));
+                reader.readAsDataURL(photo);
+            });
+            const response = await fetch('/api/identify-part', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ aircraft, photo: photoDataUrl, sheets, pageCount, ipcName: ipcFile.name })
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || `Serverfout (${response.status})`);
+            const matches = Array.isArray(payload.matches) ? payload.matches : [];
+            setAiPartStatus(matches.length ? `AI-analyse klaar. ${matches.length} mogelijke match(es) gevonden. Controleer deze in de officiële IPC.` : 'AI-analyse klaar, maar er zijn geen betrouwbare matches gevonden.');
+            if (!matches.length) {
+                results.innerHTML = `<div class="ai-result">${escapeHtml(payload.notes || payload.summary || 'Probeer een scherpere foto of upload het relevante IPC-hoofdstuk.')}</div>`;
+            } else {
+                results.innerHTML = matches.map((m, i) => `<div class="ai-result"><h4>${i + 1}. ${escapeHtml(m.partNumber || 'Part number niet gevonden')} — ${escapeHtml(m.description || 'Omschrijving niet vastgesteld')}</h4><div><strong>IPC-pagina:</strong> ${escapeHtml(String(m.pageNumber ?? 'Niet vastgesteld'))}</div><div><strong>Figuur / item:</strong> ${escapeHtml(m.figureItem || 'Niet vastgesteld')}</div><div><strong>Vertrouwen:</strong> ${escapeHtml(m.confidence || 'Onzeker')}</div><p style="margin-top:6px">${escapeHtml(m.reason || '')}</p></div>`).join('');
+            }
+            if (payload.warning) {
+                results.insertAdjacentHTML('beforeend', `<div class="ai-result"><strong>Belangrijk:</strong> ${escapeHtml(payload.warning)}</div>`);
+            }
+            if (!matches.length && payload.notes) {
+                results.innerHTML = `<div class="ai-result">${escapeHtml(payload.notes)}</div>`;
+                if (payload.warning) {
+                    results.insertAdjacentHTML('beforeend', `<div class="ai-result"><strong>Belangrijk:</strong> ${escapeHtml(payload.warning)}</div>`);
+                }
+            }
+        } catch (error) {
+            setAiPartStatus(`Fout: ${error.message}
+Controleer of de backend is gedeployed en OPENAI_API_KEY in Render is ingesteld.`);
+        } finally {
+            button.disabled = false; button.style.opacity = '1';
+        }
+    }
 
     /* ============================================================
        START
