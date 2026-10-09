@@ -12,6 +12,9 @@ const DATA_DIR = path.join(__dirname, "data");
 const MANUALS_DIR = path.join(DATA_DIR, "manuals");
 const LIBRARY_FILE = path.join(DATA_DIR, "library.json");
 
+const MAX_MANUALS_PER_AIRCRAFT = 50;
+const MAX_FILES_PER_UPLOAD = 50;
+
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(MANUALS_DIR, { recursive: true });
 
@@ -22,19 +25,14 @@ fs.mkdirSync(MANUALS_DIR, { recursive: true });
 function loadLibrary() {
   if (!fs.existsSync(LIBRARY_FILE)) {
     const emptyLibrary = { aircraft: [] };
-    fs.writeFileSync(
-      LIBRARY_FILE,
-      JSON.stringify(emptyLibrary, null, 2)
-    );
+    fs.writeFileSync(LIBRARY_FILE, JSON.stringify(emptyLibrary, null, 2));
     return emptyLibrary;
   }
 
   try {
-    const data = JSON.parse(
-      fs.readFileSync(LIBRARY_FILE, "utf8")
-    );
+    const data = JSON.parse(fs.readFileSync(LIBRARY_FILE, "utf8"));
 
-    if (!data.aircraft) {
+    if (!Array.isArray(data.aircraft)) {
       data.aircraft = [];
     }
 
@@ -46,10 +44,7 @@ function loadLibrary() {
 }
 
 function saveLibrary(library) {
-  fs.writeFileSync(
-    LIBRARY_FILE,
-    JSON.stringify(library, null, 2)
-  );
+  fs.writeFileSync(LIBRARY_FILE, JSON.stringify(library, null, 2));
 }
 
 // --------------------------------------------------
@@ -57,18 +52,11 @@ function saveLibrary(library) {
 // --------------------------------------------------
 
 app.use(express.json({ limit: "40mb" }));
-
-app.use(
-  express.urlencoded({
-    extended: true
-  })
-);
+app.use(express.urlencoded({ extended: true, limit: "40mb" }));
 
 app.use(
   session({
-    secret:
-      process.env.SESSION_SECRET ||
-      "CHANGE-THIS-SECRET",
+    secret: process.env.SESSION_SECRET || "CHANGE-THIS-SECRET",
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -93,16 +81,22 @@ const storage = multer.diskStorage({
       .basename(file.originalname)
       .replace(/[^a-zA-Z0-9._-]/g, "_");
 
-    const uniqueName = Date.now() + "_" + safeName;
+    const uniqueName =
+      Date.now() +
+      "_" +
+      Math.random().toString(36).substring(2, 10) +
+      "_" +
+      safeName;
+
     cb(null, uniqueName);
   }
 });
 
 const upload = multer({
   storage,
-
   limits: {
-    fileSize: 5 * 1024 * 1024 * 1024
+    fileSize: 5 * 1024 * 1024 * 1024,
+    files: MAX_FILES_PER_UPLOAD
   },
 
   fileFilter: function (req, file, cb) {
@@ -111,9 +105,7 @@ const upload = multer({
       path.extname(file.originalname).toLowerCase() === ".pdf";
 
     if (!isPdf) {
-      return cb(
-        new Error("Alleen PDF-bestanden zijn toegestaan.")
-      );
+      return cb(new Error("Alleen PDF-bestanden zijn toegestaan."));
     }
 
     cb(null, true);
@@ -129,9 +121,7 @@ function requireAdmin(req, res, next) {
     return next();
   }
 
-  res.status(401).json({
-    error: "Niet ingelogd als admin."
-  });
+  res.status(401).json({ error: "Niet ingelogd als admin." });
 }
 
 // --------------------------------------------------
@@ -226,10 +216,7 @@ app.post("/api/admin/aircraft", requireAdmin, (req, res) => {
   library.aircraft.push(aircraft);
   saveLibrary(library);
 
-  res.json({
-    success: true,
-    aircraft
-  });
+  res.json({ success: true, aircraft });
 });
 
 // --------------------------------------------------
@@ -244,21 +231,15 @@ app.put("/api/admin/aircraft/:id", requireAdmin, (req, res) => {
   );
 
   if (!aircraft) {
-    return res.status(404).json({
-      error: "Aircraft niet gevonden."
-    });
+    return res.status(404).json({ error: "Aircraft niet gevonden." });
   }
 
-  if (req.body.name && req.body.name.trim()) {
+  if (typeof req.body.name === "string" && req.body.name.trim()) {
     aircraft.name = req.body.name.trim();
   }
 
   saveLibrary(library);
-
-  res.json({
-    success: true,
-    aircraft
-  });
+  res.json({ success: true, aircraft });
 });
 
 // --------------------------------------------------
@@ -273,9 +254,7 @@ app.delete("/api/admin/aircraft/:id", requireAdmin, (req, res) => {
   );
 
   if (index === -1) {
-    return res.status(404).json({
-      error: "Aircraft niet gevonden."
-    });
+    return res.status(404).json({ error: "Aircraft niet gevonden." });
   }
 
   const aircraft = library.aircraft[index];
@@ -301,12 +280,14 @@ app.delete("/api/admin/aircraft/:id", requireAdmin, (req, res) => {
 
 // --------------------------------------------------
 // MANUALS UPLOADEN
+// MAXIMAAL 50 BESTANDEN PER UPLOAD
+// MAXIMAAL 50 MANUALS PER AIRCRAFT
 // --------------------------------------------------
 
 app.post(
   "/api/admin/manuals",
   requireAdmin,
-  upload.array("manuals", 4),
+  upload.array("manuals", MAX_FILES_PER_UPLOAD),
   (req, res) => {
     const aircraftId = req.query.aircraftId;
 
@@ -315,6 +296,10 @@ app.post(
     ).toUpperCase();
 
     if (type !== "AMM" && type !== "IPC") {
+      for (const file of req.files || []) {
+        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+      }
+
       return res.status(400).json({
         error: "Manual type moet AMM of IPC zijn."
       });
@@ -327,33 +312,46 @@ app.post(
     );
 
     if (!aircraft) {
+      for (const file of req.files || []) {
+        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+      }
+
       return res.status(404).json({
         error: "Aircraft niet gevonden."
       });
     }
 
-    if (!aircraft.manuals) {
+    if (!Array.isArray(aircraft.manuals)) {
       aircraft.manuals = [];
     }
 
+    const incomingFiles = req.files || [];
+
+    if (incomingFiles.length === 0) {
+      return res.status(400).json({
+        error: "Selecteer minstens één PDF-bestand."
+      });
+    }
+
     if (
-      aircraft.manuals.length +
-      (req.files || []).length > 4
+      aircraft.manuals.length + incomingFiles.length >
+      MAX_MANUALS_PER_AIRCRAFT
     ) {
-      for (const file of req.files || []) {
-        if (fs.existsSync(file.path)) {
-          fs.unlinkSync(file.path);
-        }
+      for (const file of incomingFiles) {
+        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
       }
 
       return res.status(400).json({
-        error: "Maximum 4 manuals per aircraft."
+        error:
+          `Je kunt maximaal ${MAX_MANUALS_PER_AIRCRAFT} manuals per aircraft opslaan. ` +
+          `Dit aircraft heeft al ${aircraft.manuals.length} manuals. ` +
+          `Je probeert ${incomingFiles.length} bestanden toe te voegen.`
       });
     }
 
     const added = [];
 
-    for (const file of req.files || []) {
+    for (const file of incomingFiles) {
       const manual = {
         id:
           Date.now().toString() +
@@ -382,6 +380,7 @@ app.post(
     res.json({
       success: true,
       type,
+      uploaded: added.length,
       manuals: added
     });
   }
@@ -422,9 +421,7 @@ app.delete("/api/admin/manuals/:id", requireAdmin, (req, res) => {
       path.basename(foundManual.filename)
     );
 
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   }
 
   saveLibrary(library);
@@ -433,9 +430,6 @@ app.delete("/api/admin/manuals/:id", requireAdmin, (req, res) => {
 
 // --------------------------------------------------
 // AI PART FINDER
-// Vereist OPENAI_API_KEY bij Render Environment.
-// Frontend moet de foto en IPC-pagina-afbeeldingen
-// naar /api/identify-part sturen.
 // --------------------------------------------------
 
 app.get("/api/health", (req, res) => {
@@ -479,15 +473,13 @@ app.post("/api/identify-part", async (req, res, next) => {
       sheets.length > 15
     ) {
       return res.status(400).json({
-        error:
-          "Stuur tussen 1 en 15 IPC-pagina-afbeeldingen mee."
+        error: "Stuur tussen 1 en 15 IPC-pagina-afbeeldingen mee."
       });
     }
 
     if (Number(pageCount) > 60) {
       return res.status(400).json({
-        error:
-          "Per analyse mogen maximaal 60 IPC-pagina's worden bekeken."
+        error: "Per analyse mogen maximaal 60 IPC-pagina's worden bekeken."
       });
     }
 
@@ -541,12 +533,7 @@ app.post("/api/identify-part", async (req, res, next) => {
         },
         body: JSON.stringify({
           model: process.env.OPENAI_VISION_MODEL || "gpt-4.1-mini",
-          input: [
-            {
-              role: "user",
-              content
-            }
-          ],
+          input: [{ role: "user", content }],
           max_output_tokens: 1800
         })
       }
@@ -586,10 +573,7 @@ app.post("/api/identify-part", async (req, res, next) => {
 
       parsed = JSON.parse(cleaned);
     } catch {
-      parsed = {
-        matches: [],
-        notes: outputText
-      };
+      parsed = { matches: [], notes: outputText };
     }
 
     res.json({
@@ -608,13 +592,11 @@ app.post("/api/identify-part", async (req, res, next) => {
 // --------------------------------------------------
 
 app.get("/admin", (req, res) => {
-  res.sendFile(
-    path.join(__dirname, "public", "admin.html")
-  );
+  res.sendFile(path.join(__dirname, "public", "admin.html"));
 });
 
 // --------------------------------------------------
-// ROBOTS.TXT VOOR ZOEKMACHINES
+// ROBOTS.TXT
 // --------------------------------------------------
 
 app.get("/robots.txt", (req, res) => {
@@ -627,20 +609,14 @@ app.get("/robots.txt", (req, res) => {
 // PUBLIC WEBSITE
 // --------------------------------------------------
 
-app.use(
-  express.static(
-    path.join(__dirname, "public")
-  )
-);
+app.use(express.static(path.join(__dirname, "public")));
 
 // --------------------------------------------------
 // ALLE ANDERE PAGINA'S
 // --------------------------------------------------
 
 app.get("*", (req, res) => {
-  res.sendFile(
-    path.join(__dirname, "public", "index.html")
-  );
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // --------------------------------------------------
@@ -649,6 +625,24 @@ app.get("*", (req, res) => {
 
 app.use((error, req, res, next) => {
   console.error(error);
+
+  if (error instanceof multer.MulterError) {
+    if (error.code === "LIMIT_FILE_COUNT") {
+      return res.status(400).json({
+        error: `Je kunt maximaal ${MAX_FILES_PER_UPLOAD} bestanden per upload selecteren.`
+      });
+    }
+
+    if (error.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({
+        error: "Een bestand overschrijdt de maximale bestandsgrootte van 5 GB."
+      });
+    }
+
+    return res.status(400).json({
+      error: error.message || "Uploadfout."
+    });
+  }
 
   res.status(500).json({
     error: error.message || "Server error."
