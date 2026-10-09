@@ -425,7 +425,6 @@
             margin: auto;
         }
 
-        /* Selecteerbare tekstlaag boven op de PDF-canvas */
         .textLayer {
             position: absolute;
             left: 5px;
@@ -580,7 +579,7 @@
       <label class="ai-field">Foto van het onderdeel
         <input id="aiPartPhoto" type="file" accept="image/*">
       </label>
-      <div class="ai-help">MVP-limiet: maximaal 60 pagina's per IPC-scan. Als je IPC langer is, upload dan eerst het relevante hoofdstuk/deel als aparte PDF. De API-sleutel staat uitsluitend op de server.</div>
+      <div class="ai-help">Uitgebreide limiet: tot 3000 pagina's per IPC-scan ondersteund. Grote documenten worden automatisch opgesplitst in stappen verwerkt. De API-sleutel staat uitsluitend op de server.</div>
       <button id="aiRunBtn" class="ai-part-btn" onclick="runAiPartFinder()">Analyseer foto met AI</button>
       <div id="aiPartStatus" class="ai-status" aria-live="polite">Kies een IPC-PDF en een foto om te beginnen.</div>
       <div id="aiPartResults"></div>
@@ -680,7 +679,7 @@
             </div>
 
             <div id="loadedBooksCount">
-                0 / 4 boeken geladen
+                0 / 10 boeken geladen
             </div>
 
         </div>
@@ -805,7 +804,7 @@
         <div class="upload-section">
 
             <label id="uploadLabel">
-                Manuals voor Falcon (max. 4):
+                Manuals voor Falcon (max. 10):
             </label>
 
             <input
@@ -1182,12 +1181,12 @@
         document.getElementById(
             "loadedBooksCount"
         ).innerText =
-            `${aircraft.books.length} / 4 boeken geladen`;
+            `${aircraft.books.length} / 10 boeken geladen`;
 
         document.getElementById(
             "uploadLabel"
         ).innerText =
-            `Manuals voor ${aircraft.name} (max. 4):`;
+            `Manuals voor ${aircraft.name} (max. 10):`;
 
         document.getElementById(
             "headerInfoText"
@@ -2147,11 +2146,6 @@
         );
 
 
-        /*
-         * Eerste keuze:
-         * de tekst direct onder de vaste manual-header.
-         */
-
         if (
             headerIndex >= 0
         ) {
@@ -2246,11 +2240,6 @@
         }
 
 
-        /*
-         * Tweede keuze:
-         * zoek tekst onder de ATA-code.
-         */
-
         if (
             ataIndex >= 0
         ) {
@@ -2336,10 +2325,6 @@
 
         }
 
-
-        /*
-         * Laatste lichte fallback.
-         */
 
         const candidates = [];
 
@@ -2470,11 +2455,11 @@
         if (
             aircraft.books.length +
             files.length >
-            4
+            10
         ) {
 
             alert(
-                "Je kunt maximaal 4 boeken per vliegtuig laden."
+                "Je kunt maximaal 10 boeken per vliegtuig laden."
             );
 
             event.target.value = "";
@@ -2546,16 +2531,6 @@
                         );
 
 
-                    /*
-                     * BELANGRIJKE SNELHEIDSWINST:
-                     *
-                     * We halen uitsluitend tekst op.
-                     *
-                     * Geen getOperatorList()
-                     * Geen vectoranalyse.
-                     * Geen grafische lijnanalyse.
-                     */
-
                     const textContent =
                         await pdfPage.getTextContent();
 
@@ -2611,14 +2586,6 @@
                             )
                             .join(" ");
 
-
-                    /*
-                     * BELANGRIJKE OPTIMALISATIE:
-                     *
-                     * De regels worden slechts één keer
-                     * opgebouwd en daarna door ATA + Subject
-                     * hergebruikt.
-                     */
 
                     const textLines =
                         buildTextLines(
@@ -2690,11 +2657,6 @@
                         `${percentage}%`;
 
 
-                    /*
-                     * De status wordt niet bij iedere
-                     * pagina onnodig zwaar aangepast.
-                     */
-
                     if (
                         pageNumber === 1 ||
                         pageNumber % 5 === 0 ||
@@ -2708,11 +2670,6 @@
 
                     }
 
-
-                    /*
-                     * Geef de browser af en toe tijd
-                     * om de voortgang te tonen.
-                     */
 
                     if (
                         pageNumber % 10 === 0
@@ -2900,13 +2857,10 @@
 
         }).promise;
 
-        // Verwijder de tekstlaag van de vorige pagina.
         const wrapper = document.getElementById("pdfContainerWrapper");
         const oldTextLayer = wrapper.querySelector(".textLayer");
         if (oldTextLayer) oldTextLayer.remove();
 
-        // Bouw een onzichtbare tekstlaag boven de canvas zodat tekst
-        // met de muis geselecteerd en met Ctrl+C gekopieerd kan worden.
         const textLayerDiv = document.createElement("div");
         textLayerDiv.className = "textLayer";
         textLayerDiv.style.width = `${viewport.width}px`;
@@ -3397,10 +3351,7 @@
 
 
     /* ============================================================
-       AI IPC PART FINDER
-       De browser rendert IPC-pagina's naar contact sheets. De server
-       verstuurt die samen met de onderdeel-foto naar het vision-model.
-       De API-sleutel blijft op de server in OPENAI_API_KEY.
+       AI IPC PART FINDER (VERRUIMDE LIMIET TOT 3000 PAGINA'S)
        ============================================================ */
     function openAiPartFinder() {
         document.getElementById("aiPartModal").style.display = "flex";
@@ -3420,9 +3371,12 @@
     async function makeIpcContactSheets(file, onProgress) {
         const buffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-        if (pdf.numPages > 60) {
-            throw new Error(`Deze IPC heeft ${pdf.numPages} pagina's. De eerste versie ondersteunt maximaal 60 pagina's per scan. Splits de PDF in relevante hoofdstukken.`);
+        
+        // Limiet verhoogd naar 3000 pagina's om grote IPC's toe te staan
+        if (pdf.numPages > 3000) {
+            throw new Error(`Deze IPC heeft ${pdf.numPages} pagina's. De limiet is verhoogd naar 3000 pagina's.`);
         }
+        
         const pageCanvases = [];
         for (let n = 1; n <= pdf.numPages; n++) {
             onProgress(`IPC-pagina's voorbereiden: ${n}/${pdf.numPages}...`);
